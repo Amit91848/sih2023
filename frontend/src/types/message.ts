@@ -12,3 +12,13 @@
 // };
 
 // export type ExtendedMessage = OmitText & ExtendedText;
+
+export interface IMessage {
+    id: number;
+    text: string;
+    isUserMessage: boolean;
+    created_at: Date;
+    updated_at: Date;
+    user_id: number;
+    file_id: number;
+}

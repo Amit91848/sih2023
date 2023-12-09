@@ -1,7 +1,7 @@
 "use client";
 
 import { Cloud, File, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -12,11 +12,16 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { Progress } from "./ui/progress";
 import { useToast } from "./ui/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { postFile } from "@/api/upload/postFile";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { postFile } from "@/api/file/postFile";
 
-const UploadDropzone = () => {
-	const router = useRouter();
+interface UploadDropzoneProps {
+	closeModal: VoidFunction;
+}
+
+const UploadDropzone = ({ closeModal }: UploadDropzoneProps) => {
+	// const router = useRouter();
+	const queryClient = useQueryClient();
 
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -24,34 +29,36 @@ const UploadDropzone = () => {
 
 	const { mutate: uploadFile } = useMutation({
 		mutationFn: postFile,
-		onSuccess: () => {
+
+		onSuccess: (data) => {
+			queryClient.invalidateQueries(["files"]);
+			console.log(data);
 			toast({
 				title: "Success",
 				variant: "default",
-				description: "File uploaded successsfully",
+				description: `${data.data?.name} Uploaded Successfully 🎉🎉`,
 			});
 		},
-		onError: () => {
+		onError: (err) => {
 			toast({
 				title: "Failed!",
 				variant: "destructive",
-				description: "File upload failed!",
+				description: `Couldn't upload the file because ${err}`,
 			});
 		},
 	});
 
-	// const { startUpload } = useUploadThing("pdfUploader");
-
 	const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+		multiple: false,
 		onDrop(acceptedFiles) {
 			setIsUploading(true);
 			const progressInterval = startSimulatedProgress();
-			console.log(acceptedFiles);
 
 			uploadFile(acceptedFiles[0]);
 
 			clearInterval(progressInterval);
 			setUploadProgress(100);
+			closeModal();
 		},
 	});
 
@@ -151,7 +158,7 @@ const UploadButton = () => {
 			</DialogTrigger>
 
 			<DialogContent>
-				<UploadDropzone />
+				<UploadDropzone closeModal={() => setIsOpen(false)} />
 			</DialogContent>
 		</Dialog>
 	);
