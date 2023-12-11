@@ -15,6 +15,8 @@ from langchain.vectorstores.pinecone import Pinecone
 import requests
 import pinecone
 from pinecone.exceptions import ApiException
+from core.services.vector_store.service import VectorStoreService
+from langchain_core.embeddings import Embeddings
 
 
 def get_pinecone_client():
@@ -30,7 +32,7 @@ class FileUploadBody(BaseModel):
     pass
 
 
-async def upload_to_vector_database(vector_store, embeddings, file_url: str):
+async def upload_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, file_url: str):
     file_blob = requests.get(file_url)
 
     if file_blob.status_code == 200:
