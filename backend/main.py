@@ -22,6 +22,10 @@ def init() -> None:
 
 
 def main() -> None:
+    if not settings.PINECONE_API_KEY and not settings.PINECONE_ENVIRONMENT:
+        print("Pinecone not present")
+    else:
+        print("Pinecone present")
     logger.info("Creating initial data")
     init()
     logger.info("Initial data created")

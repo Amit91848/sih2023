@@ -8,6 +8,12 @@ __pycache__/
 # C extensions
 *.so
 
+# ChromaDB storage files
+*.bin
+
+# ChromaDB SQLite database file
+chroma.sqlite3
+
 # Distribution / packaging
 .Python
 build/

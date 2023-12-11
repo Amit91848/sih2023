@@ -47,7 +47,7 @@ class File(SQLModel, table=True):
     user: "User" = Relationship(back_populates="files")
 
     messages: List["Message"] = Relationship(back_populates="file", sa_relationship_kwargs={
-                                             "cascade": "all,delete,delete-orphan"})
+                                             "cascade": "all, delete-orphan"})
 
 
 class User(UserBase, table=True):

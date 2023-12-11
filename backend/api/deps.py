@@ -1,5 +1,6 @@
 from typing import Generator, Annotated
 from sqlmodel import Session
+import os
 
 from db.engine import engine
 
@@ -10,6 +11,11 @@ from jose import jwt, JWTError
 from core.settings import settings
 from core.security import ALGORITHM
 from pydantic import ValidationError
+from core.services.file.UploadService import LocalUploadService, FileUploadService, S3Service
+from core.services.vector_store.service import VectorStoreService, PineconeService, ChromaService
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from core.services.embedding.openai import get_openai_embeddings
+from langchain_core.embeddings import Embeddings
 
 
 def get_db() -> Generator:
@@ -22,8 +28,36 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 
+def create_upload_service():
+    if settings.S3_ACCESS_KEY and settings.S3_SECRET_ACCESS_KEY:
+        # s3_client = ...  # Instantiate your S3 client (boto3, aioboto, etc.)
+        return S3Service()
+    else:
+        return LocalUploadService(local_storage_path=os.getcwd())
+
+
+def get_embeddings():
+    if settings.OPENAI_API_KEY:
+        return get_openai_embeddings()
+    else:
+        return SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+
+
+def create_vector_store_service():
+    if settings.PINECONE_API_KEY and settings.PINECONE_ENVIRONMENT:
+        return PineconeService()
+    else:
+        print("returning chroma store")
+        return ChromaService()
+
+
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
+FileUploadServiceDep = Annotated[FileUploadService, Depends(
+    create_upload_service)]
+EmbeddingDep = Annotated[Embeddings, Depends(get_embeddings)]
+VectorStoreDep = Annotated[VectorStoreService,
+                           Depends(create_vector_store_service)]
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:

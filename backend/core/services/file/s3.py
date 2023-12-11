@@ -1,4 +1,4 @@
-from dependencies.fileUploadService import FileUploadService
+from core.services.file.fileUploadService import FileUploadService
 import boto3
 from boto3.exceptions import S3UploadFailedError
 from core.settings import settings

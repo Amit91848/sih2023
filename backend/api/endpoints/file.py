@@ -7,18 +7,14 @@ from pydantic import BaseModel
 from crud.crud_file import create_file, get_user_files, delete_user_file, get_user_file
 import tempfile
 
-from api.deps import CurrentUser, SessionDep
+from api.deps import CurrentUser, SessionDep, FileUploadServiceDep, EmbeddingDep, VectorStoreDep
 from core.settings import settings
-from core.utils import success_response, error_response, MB, generate_random_file_name
-from dependencies.services.s3 import S3Service
-from crud.crud_message import get_all_messages
+from core.utils import success_response, MB, generate_random_file_name
 from langchain.document_loaders.pdf import PyMuPDFLoader
 from langchain.vectorstores.pinecone import Pinecone
 import requests
-from core.openai import get_openai_embeddings
 import pinecone
 from pinecone.exceptions import ApiException
-from pypdf import PdfFileReader, PdfReader
 
 
 def get_pinecone_client():
@@ -34,13 +30,7 @@ class FileUploadBody(BaseModel):
     pass
 
 
-def create_upload_service():
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_ACCESS_KEY:
-        # s3_client = ...  # Instantiate your S3 client (boto3, aioboto, etc.)
-        return S3Service()
-
-
-async def upload_to_vector_database(file_url: str):
+async def upload_to_vector_database(vector_store, embeddings, file_url: str):
     file_blob = requests.get(file_url)
 
     if file_blob.status_code == 200:
@@ -52,16 +42,11 @@ async def upload_to_vector_database(file_url: str):
             temp_pdf_path = temp_file.name
 
         try:
-            # Create PyMuPDFLoader instance using the temporary file path
             pdf_loader = PyMuPDFLoader(file_path=temp_pdf_path)
             pdf = pdf_loader.load()
-            pinecone_client = get_pinecone_client()
-            pinecone_client.Index(index_name="prakat")
-
-            embeddings = get_openai_embeddings()
 
             try:
-                Pinecone.from_documents(
+                vector_store.upload_document(
                     documents=pdf, embedding=embeddings, index_name="prakat")
             except ApiException:
                 print("err while uploading to pinecone ")
@@ -77,11 +62,8 @@ async def upload_to_vector_database(file_url: str):
                     print(f"Error deleting temporary file: {e}")
 
 
-upload_service = create_upload_service()
-
-
 @router.post("/upload")
-async def upload(session: SessionDep, file: UploadFile, current_user: CurrentUser):
+async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_service: FileUploadServiceDep, session: SessionDep, file: UploadFile, current_user: CurrentUser):
     if not file:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -107,7 +89,7 @@ async def upload(session: SessionDep, file: UploadFile, current_user: CurrentUse
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error uploading file!!")
 
-    await upload_to_vector_database(file_url)
+    await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url)
     print("uploaded to pinecone")
 
     file_obj = create_file(db=session, name=file.filename,

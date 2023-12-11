@@ -8,10 +8,9 @@ from crud.crud_file import get_user_file
 from core.utils import success_response
 from openai import OpenAI
 from core.settings import settings
-# from sentence_transformers import SentenceTransformer
 from langchain.vectorstores.pinecone import Pinecone
-# from langchain.embeddings import OpenAIEmbeddings
-from core.openai import get_openai_embeddings
+from api.deps import EmbeddingDep, VectorStoreDep
+
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -25,7 +24,7 @@ class MessageBody(BaseModel):
 
 
 @router.post("/")
-async def post_message(session: SessionDep, current_user: CurrentUser, body: MessageBody):
+async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, session: SessionDep, current_user: CurrentUser, body: MessageBody):
     file = get_user_file(session, current_user.id, body.fileId)
 
     if not file:
@@ -40,10 +39,10 @@ async def post_message(session: SessionDep, current_user: CurrentUser, body: Mes
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Error storing message")
 
     # model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-    embeddings = get_openai_embeddings()
-    vectorStore = Pinecone.from_existing_index("prakat", embeddings)
 
-    results = vectorStore.similarity_search(body.message, 4)
+    # vectorStore = Pinecone.from_existing_index("prakat", embeddings)
+
+    results = vector_store.similarity_search(body.message, 5, {})
     context_text = "\n\n".join([result.page_content for result in results])
 
     prev_messages = find_prev_messages(
