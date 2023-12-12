@@ -10,7 +10,7 @@ import { useToast } from "./ui/use-toast";
 import { useResizeDetector } from "react-resize-detector";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,15 +25,18 @@ import {
 } from "./ui/dropdown-menu";
 
 import SimpleBar from "simplebar-react";
-import PDFFullscreen from "./PDFFullScreen";
+import PDFFullScreen from "./PDFFullScreen";
+import { OnRefChangeType } from "react-resize-detector/build/types/types";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
-interface PDFRendererProps {
+interface PdfRendererProps {
 	url: string;
+	childWidth: number | undefined;
+	childRef: OnRefChangeType<any>;
 }
 
-const PDFRenderer = ({ url }: PDFRendererProps) => {
+const PdfRenderer = ({ url, childWidth, childRef }: PdfRendererProps) => {
 	const { toast } = useToast();
 
 	const [numPages, setNumPages] = useState<number>();
@@ -64,7 +67,8 @@ const PDFRenderer = ({ url }: PDFRendererProps) => {
 
 	// console.log(errors);
 
-	const { width, ref } = useResizeDetector();
+	// const { width, ref } = useResizeDetector();
+	console.log({ childWidth, childRef });
 
 	const handlePageSubmit = ({ page }: TCustomPageValidator) => {
 		setCurrPage(Number(page));
@@ -141,13 +145,13 @@ const PDFRenderer = ({ url }: PDFRendererProps) => {
 						<RotateCw className="h-4 w-4" />
 					</Button>
 
-					<PDFFullscreen fileUrl={url} />
+					<PDFFullScreen fileUrl={url} />
 				</div>
 			</div>
 
-			<div className="flex-1 w-full h-96">
+			<div className="flex-1 w-full max-h-screen">
 				<SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
-					<div ref={ref}>
+					<div ref={childRef}>
 						<Document
 							loading={
 								<div className="flex justify-center">
@@ -167,7 +171,7 @@ const PDFRenderer = ({ url }: PDFRendererProps) => {
 						>
 							{isLoading && renderedScale ? (
 								<Page
-									width={width ? width : 1}
+									width={childWidth ? childWidth : 1}
 									pageNumber={currPage}
 									scale={scale}
 									rotate={rotation}
@@ -177,7 +181,7 @@ const PDFRenderer = ({ url }: PDFRendererProps) => {
 
 							<Page
 								className={cn(isLoading ? "hidden" : "")}
-								width={width ? width : 1}
+								width={childWidth ? childWidth : 1}
 								pageNumber={currPage}
 								scale={scale}
 								rotate={rotation}
@@ -197,4 +201,4 @@ const PDFRenderer = ({ url }: PDFRendererProps) => {
 	);
 };
 
-export default PDFRenderer;
+export default PdfRenderer;
