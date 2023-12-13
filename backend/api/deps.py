@@ -16,6 +16,7 @@ from core.services.vector_store.service import VectorStoreService, PineconeServi
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from core.services.embedding.openai import get_openai_embeddings
 from langchain_core.embeddings import Embeddings
+from core.services.llm.prakat import FlanModel
 
 
 def get_db() -> Generator:
@@ -50,6 +51,8 @@ def create_vector_store_service():
         print("returning chroma store")
         return ChromaService()
 
+def create_llm_model_service():
+    return FlanModel(model_name="flan_t5_base_summarizer",tokenizer_name="flan_t5_base_tokenizer")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
@@ -58,6 +61,7 @@ FileUploadServiceDep = Annotated[FileUploadService, Depends(
 EmbeddingDep = Annotated[Embeddings, Depends(get_embeddings)]
 VectorStoreDep = Annotated[VectorStoreService,
                            Depends(create_vector_store_service)]
+LLMModelDep = Annotated[FlanModel, Depends(create_llm_model_service)]
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
