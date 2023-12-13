@@ -4,7 +4,8 @@ import { Loader2, MessageSquare, Plus, Trash } from "lucide-react";
 import React, { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
-import Link from "next/link";
+// import Link from "next/link";
+import { Link } from "@/lib/navigation";
 import { Button } from "./ui/button";
 import UploadButton from "./UploadButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +59,7 @@ const Dashboard = () => {
 								className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow transition hover:shadow-lg"
 							>
 								<Link
-									href={`/dashboard/file?fileId=${file.id}`}
+									href={{ pathname: "/dashboard/file", query: { fileId: file.id } }}
 									className="flex flex-col gap-2 cursor-pointer"
 								>
 									<div className="flex flex-col gap-2">

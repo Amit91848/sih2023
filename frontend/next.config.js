@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const withNextIntl = require("next-intl/plugin")();
+
 const nextConfig = {
 	reactStrictMode: true,
 	swcMinify: true,
@@ -6,11 +8,11 @@ const nextConfig = {
 		unoptimized: true,
 	},
 	output: "export",
-	webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+	webpack: (config) => {
 		config.resolve.alias.canvas = false;
 		config.resolve.alias.encoding = false;
 		return config;
 	},
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

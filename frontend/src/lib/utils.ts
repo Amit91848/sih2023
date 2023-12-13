@@ -73,4 +73,4 @@ export const cAxios = {
 export const BACKEND_URL = "http://localhost:8000/api";
 
 export const HEADER_TOKEN =
-	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDMwNDE0NzIsInN1YiI6IjEifQ.W72ugY-hrW9aTNAT3AD7EB8NNAGaGMweVCHrkvjwMik";
+	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDMwNzkyNDEsInN1YiI6IjEifQ.PpCTdZkFwd3uvBq2kylBROYfdCskOdTc9yRorP9TWrM";

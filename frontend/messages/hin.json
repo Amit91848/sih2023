@@ -1,0 +1,12 @@
+{
+	"Dashboard": {
+		"title": "Private LLM Genie System",
+		"new_way_proposal": "We propose a new way to interact with data and databases using sophisticateVectorization and Retrieval Augmentation using LLM's",
+		"get_started": "Get Started"
+	},
+	"Language": {
+		"locale": "{locale, select, hin {Hindi} en {English} other {Unknown}}",
+		"en": "English",
+		"hin": "Hindi"
+	}
+}
