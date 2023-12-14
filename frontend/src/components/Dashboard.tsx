@@ -6,8 +6,7 @@ import Skeleton from "react-loading-skeleton";
 import { MoreVertical } from "lucide-react";
 
 // import Link from "next/link";
-import { Link } from "@/lib/navigation";
-import { Button, buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 import UploadButton from "./UploadButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Header } from "./ui/header";
@@ -15,6 +14,16 @@ import { getUserFiles } from "@/api/file/getUserFiles";
 import { format } from "date-fns";
 import { deleteUserFile } from "@/api/file/deleteUserFile";
 import { EmptyScreen } from "./EmptyScreen";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const Dashboard = () => {
 	const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<number | null>(
@@ -71,7 +80,7 @@ const Dashboard = () => {
 													<h3 className="truncate text-lg font-medium text-zinc-900">
 														{file.name}
 													</h3>
-													<Link
+													{/* <Link
 														href="/dashboard"
 														className={buttonVariants({
 															variant: "ghost",
@@ -79,7 +88,46 @@ const Dashboard = () => {
 														})}
 													>
 														<MoreVertical onClick={() => {}} />
-													</Link>
+													</Link> */}
+													<DropdownMenu>
+														<DropdownMenuTrigger>
+															{/* <Button variant="ghost"> */}
+															<MoreVertical />
+															{/* </Button> */}
+														</DropdownMenuTrigger>
+														<DropdownMenuContent>
+															<DropdownMenuItem className="cursor-pointer">
+																Chat With Doc
+															</DropdownMenuItem>
+
+															<DropdownMenuSub>
+																<DropdownMenuSubTrigger className="cursor-pointer">
+																	Generate Summary
+																</DropdownMenuSubTrigger>
+																<DropdownMenuSubContent>
+																	<DropdownMenuItem className="cursor-pointer">
+																		Long
+																	</DropdownMenuItem>
+																	<DropdownMenuItem className="cursor-pointer">
+																		Medium
+																	</DropdownMenuItem>
+																	<DropdownMenuItem className="cursor-pointer">
+																		Short
+																	</DropdownMenuItem>
+																</DropdownMenuSubContent>
+															</DropdownMenuSub>
+															<DropdownMenuItem
+																className="cursor-pointer"
+																onClick={() => generateSummary({ file_id: file.id })}
+															>
+																Grammar Check
+															</DropdownMenuItem>
+															<DropdownMenuSeparator />
+															<DropdownMenuItem color="red" className="cursor-pointer">
+																Delete
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
 												</div>
 											</div>
 										</div>
