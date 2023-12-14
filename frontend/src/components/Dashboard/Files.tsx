@@ -2,22 +2,23 @@ import { deleteUserFile } from "@/api/file/deleteUserFile";
 import { getUserFiles } from "@/api/file/getUserFiles";
 import { summarizeFile, BatchSize } from "@/api/file/summarizeFile";
 import { Status } from "@/types";
-import {
-	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSub,
-	DropdownMenuSubTrigger,
-	DropdownMenuSubContent,
-	DropdownMenuSeparator,
-} from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { MoreVertical, Plus, Loader2, Check, XCircle } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import { EmptyScreen } from "../EmptyScreen";
 import { useState } from "react";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export const Files = () => {
 	const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<number | null>(
@@ -98,8 +99,22 @@ export const Files = () => {
 															</DropdownMenuItem>
 
 															<DropdownMenuSub>
-																<DropdownMenuSubTrigger className="cursor-pointer">
-																	Generate Summary
+																<DropdownMenuSubTrigger
+																	disabled={
+																		file.summary_status === Status.PROCESSING ||
+																		file.summary_status === Status.PENDING
+																	}
+																	className={cn(
+																		file.summary_status === Status.PROCESSING ||
+																			file.summary_status === Status.PENDING
+																			? "cursor-not-allowed text-gray-400"
+																			: "cursor-pointer",
+																	)}
+																>
+																	{file.summary_status === Status.PROCESSING ||
+																	file.summary_status === Status.PENDING
+																		? "Generating Summary"
+																		: "Generate Summary"}
 																</DropdownMenuSubTrigger>
 																<DropdownMenuSubContent>
 																	<DropdownMenuItem
@@ -143,7 +158,7 @@ export const Files = () => {
 															<DropdownMenuSeparator />
 															<DropdownMenuItem
 																color="red"
-																className="cursor-pointer font-semibold !text-red-700 hover:!bg-red-600 hover:!text-white"
+																className="cursor-pointer font-semibold "
 																onClick={() => deleteFile({ file_id: file.id })}
 															>
 																Delete
