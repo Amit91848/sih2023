@@ -1,8 +1,15 @@
 import re
 from transformers import AutoModelForSeq2SeqLM
 from transformers import AutoTokenizer
+from enum import Enum
+from crud.crud_summary import update_summary
+from core.types import Status
+from api.deps import Session
 
-
+class BatchSize(Enum):
+  LONG = 1
+  MEDIUM = 2
+  SHORT = 3
 
 class Batching():
     def __init__(self):
@@ -158,14 +165,22 @@ class FlanModel():
         return summary
     
 
-    def batch_summarize(self, text: str, batch_size: int):
-        batches = self.batcher.divide_text_into_batches(text=text, batch_size=batch_size)
+    def batch_summarize(self, text: str, batch_size: BatchSize, session: Session, summary_id: int):
+        size = 2048
+        if batch_size == BatchSize.LONG:
+            size = 512
+        elif batch_size == BatchSize.MEDIUM:
+            size = 1024
+        elif batch_size == BatchSize.SHORT:
+            size = 2048
+        batches = self.batcher.divide_text_into_batches(text=text, batch_size=size)
         summaries = []
         for batch in batches:
             summary = self.summarize(batch)
             summaries.append(summary)
 
         full_summary = '\n'.join(summaries)
+        db_summary = update_summary(db=session, summary_id=summary_id, status=Status.SUCCESS, summary=summary)
         return full_summary
     
     

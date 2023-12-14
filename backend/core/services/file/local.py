@@ -8,16 +8,17 @@ class LocalUploadService(FileUploadService):
         self.local_storage_path = local_storage_path
 
     def get_presigned_url(self, file_name: str) -> str:
-        return f"file://{self.local_storage_path}/{file_name}"
+        return f"{self.local_storage_path}/{file_name}"
 
-    def upload(self, file_content: bytes, filename: str, metadata: Dict[str, Any] = None) -> str:
+    def upload(self, file_content, file_name: str, metadata: Dict[str, Any] = None) -> str:
         try:
-            with open(os.path.join(self.local_storage_path, filename), 'wb') as local_file:
-                local_file.write(file_content)
+            contents = file_content.read()
+            with open(os.path.join(self.local_storage_path, file_name), 'wb') as local_file:
+                local_file.write(contents)
             print("Local save successful")
 
-            url = self.get_presigned_url(filename)
-            return url
+            url = self.get_presigned_url(file_name)
+            return url, True
         except Exception as e:
             print(f"Local save failed: {e}")
             return None

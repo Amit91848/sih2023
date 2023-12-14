@@ -37,7 +37,7 @@ class S3Service(FileUploadService):
             print("Upload successful")
 
             url = self.get_presigned_url(file_name)
-            return url
+            return url, False
 
             # return f"https://s3.amazonaws.com/{self.s3_bucket}/{file_name}"
         except S3UploadFailedError as e:

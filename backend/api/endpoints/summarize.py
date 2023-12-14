@@ -1,34 +1,41 @@
-from fastapi import APIRouter, HTTPException
-from api.deps import LLMModelDep
-import requests
-from PyPDF2 import PdfReader
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from api.deps import create_llm_model_service, SessionDep, CurrentUser
+from pydantic import BaseModel
+from crud.crud_file import get_user_file
+from crud.crud_summary import create_summary, update_summary
+from langchain.document_loaders.pdf import PyMuPDFLoader
+from core.types import BatchSize,Status
+
+class SummarizeBody(BaseModel):
+  fileId: int
+  batchSize: BatchSize
 
 router = APIRouter()
 
-@router.get("/summarize")
-async def summarize_text(llm: LLMModelDep):
-  # try:
-    # return {"input_text": body.input_txt, "summary": summary}
-  # finally:
-    # llm.unload_model()
-  try:
-    
-    # res.raise_for_status()
-    # pdf_content = io.BytesIO(requests.get("https://phoenix-alpha-images.s3.amazonaws.com/17effe52cb1b90205bda_drylab.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAZFR6HXDKQZFW32FE%2F20231213%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20231213T160551Z&X-Amz-Expires=518400&X-Amz-SignedHeaders=host&X-Amz-Signature=e662b5bd40bb2e7e8b65d2aeb589195e487f4a44945eacfa61e4cf269a1c419e").content)
-  
-    pdf_doc = PdfReader(r"C:\Users\adwai\Downloads\bitcoin.pdf")
-    txt_content = ""
-    for page_num in range(len(pdf_doc.pages)):
-      page = pdf_doc.pages[page_num]
-      txt_content += page.extract_text()
-    
-    summary = llm.batch_summarize(text=txt_content, batch_size=512)
-    return {"text_content": txt_content, "summary": summary}
-  except requests.exceptions.RequestException as e:
-    raise HTTPException(status_code=500, detail=f"Error downloading PDF: {str(e)}")
+def call_batch_summarize(session: SessionDep, txt_content: str, summary_id: int, batch_size: BatchSize):
+  llm = create_llm_model_service()
+  llm.batch_summarize(session=session, summary_id=summary_id, text=txt_content[:500], batch_size=batch_size)
 
-  except Exception as e:
-    raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
-  finally:
-    llm.unload_model()
+@router.post("/summarize")
+async def summarize_text(session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):
+  # try:
+    file = get_user_file(db=session, user_id=currentUser.id, file_id=body.fileId)
+
+    if not file:
+      raise HTTPException(status=status.HTTP_404, detail="File not found")
+
+    pdf_loader = PyMuPDFLoader(file_path=file[0].url)
+    pdf = pdf_loader.load()
+    txt_content = ""
+    for page_num in range(len(pdf)):
+      page = pdf[page_num].page_content
+      txt_content += page
+      
+    db_summary = create_summary(session, type=body.batchSize, file_id=file[0].id, summary="", user_id=currentUser.id, status=Status.PENDING)
+      
+    bg_tasks.add_task(call_batch_summarize, session=session, summary_id=db_summary.id, txt_content=txt_content[:500], batch_size=body.batchSize)
+      
+    return {"text_content": txt_content[:500], "message": "We are processing your summary request"}
+  # finally:
+  #   llm.unload_model()
   

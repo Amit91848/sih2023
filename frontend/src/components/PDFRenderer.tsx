@@ -7,7 +7,6 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { useToast } from "./ui/use-toast";
 
-import { useResizeDetector } from "react-resize-detector";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
@@ -27,6 +26,7 @@ import {
 import SimpleBar from "simplebar-react";
 import PDFFullScreen from "./PDFFullScreen";
 import { OnRefChangeType } from "react-resize-detector/build/types/types";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 

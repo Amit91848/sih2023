@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, MessageSquare, Plus, Trash } from "lucide-react";
+import { Check, Loader2, MessageSquare, Plus, Trash, XCircle } from "lucide-react";
 import React, { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { MoreVertical } from "lucide-react";
@@ -24,6 +24,9 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Link } from "@/lib/navigation";
+import { summarizeFile, BatchSize } from "@/api/file/summarizeFile";
+import { Status } from "@/types";
 
 const Dashboard = () => {
 	const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<number | null>(
@@ -34,6 +37,7 @@ const Dashboard = () => {
 	const { data: files, isLoading } = useQuery({
 		queryKey: ["files"],
 		queryFn: getUserFiles,
+		refetchInterval: 5000,
 	});
 
 	const { mutate: deleteFile } = useMutation({
@@ -44,6 +48,13 @@ const Dashboard = () => {
 		onSettled() {
 			setCurrentlyDeletingFile(null);
 		},
+		onSuccess() {
+			queryClient.invalidateQueries(["files"]);
+		},
+	});
+
+	const { mutate: generateSummary } = useMutation({
+		mutationFn: summarizeFile,
 		onSuccess() {
 			queryClient.invalidateQueries(["files"]);
 		},
@@ -105,21 +116,42 @@ const Dashboard = () => {
 																	Generate Summary
 																</DropdownMenuSubTrigger>
 																<DropdownMenuSubContent>
-																	<DropdownMenuItem className="cursor-pointer">
+																	<DropdownMenuItem
+																		className="cursor-pointer"
+																		onClick={() =>
+																			generateSummary({
+																				fileId: file.id,
+																				batchSize: BatchSize.LONG,
+																			})
+																		}
+																	>
 																		Long
 																	</DropdownMenuItem>
-																	<DropdownMenuItem className="cursor-pointer">
+																	<DropdownMenuItem
+																		className="cursor-pointer"
+																		onClick={() => {
+																			generateSummary({
+																				fileId: file.id,
+																				batchSize: BatchSize.MEDIUM,
+																			});
+																		}}
+																	>
 																		Medium
 																	</DropdownMenuItem>
-																	<DropdownMenuItem className="cursor-pointer">
+																	<DropdownMenuItem
+																		className="cursor-pointer"
+																		onClick={() => {
+																			generateSummary({
+																				fileId: file.id,
+																				batchSize: BatchSize.SHORT,
+																			});
+																		}}
+																	>
 																		Short
 																	</DropdownMenuItem>
 																</DropdownMenuSubContent>
 															</DropdownMenuSub>
-															<DropdownMenuItem
-																className="cursor-pointer"
-																onClick={() => generateSummary({ file_id: file.id })}
-															>
+															<DropdownMenuItem className="cursor-pointer">
 																Grammar Check
 															</DropdownMenuItem>
 															<DropdownMenuSeparator />
@@ -134,29 +166,24 @@ const Dashboard = () => {
 									</div>
 								</div>
 
-								<div className="px-6 mt-4 grid grid-cols-3 place-items-center py-2 gap-6 text-xs text-zinc-500">
+								<div className="px-6 mt-4 grid grid-cols-2 place-items-center py-2 gap-6 text-xs text-zinc-500">
 									<div className="flex items-center gap-2">
 										<Plus className="h-4 w-4" />
 										{format(new Date(file.created_at), "MMM yyyy")}
 									</div>
 
 									<div className="flex items-center gap-2">
-										<MessageSquare className="h-4 w-4" />
-										mocked
-									</div>
-
-									<Button
-										onClick={() => deleteFile({ file_id: file.id })}
-										size="sm"
-										className="w-full"
-										variant="destructive"
-									>
-										{currentlyDeletingFile === file.id ? (
+										{file.summary_status === Status.PENDING ||
+										file.summary_status === Status.PROCESSING ? (
 											<Loader2 className="h-4 w-4 animate-spin" />
+										) : file.summary_status === Status.SUCCESS ? (
+											<>
+												<Check className="text-green-600" /> Summary Generated
+											</>
 										) : (
-											<Trash className="h-4 w-4" />
+											<XCircle className="text-red-600" />
 										)}
-									</Button>
+									</div>
 								</div>
 							</li>
 						))}

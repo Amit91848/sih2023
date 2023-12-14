@@ -34,7 +34,7 @@ def create_upload_service():
         # s3_client = ...  # Instantiate your S3 client (boto3, aioboto, etc.)
         return S3Service()
     else:
-        return LocalUploadService(local_storage_path=os.getcwd())
+        return LocalUploadService(local_storage_path=os.path.join(os.getcwd(),"files"))
 
 
 def get_embeddings():

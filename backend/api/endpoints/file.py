@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status
 from pydantic import BaseModel
 from crud.crud_file import create_file, get_user_files, delete_user_file, get_user_file
 import tempfile
+from crud.crud_summary import get_latest_summary
 
 from api.deps import CurrentUser, SessionDep, FileUploadServiceDep, EmbeddingDep, VectorStoreDep
 from core.settings import settings
@@ -83,7 +84,7 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
 
     file_name = f'{generate_random_file_name(file_name=file.filename)}'
 
-    file_url = upload_service.upload(file_content=io.BytesIO(
+    file_url, isLocal = upload_service.upload(file_content=io.BytesIO(
         contents), file_name=file_name)
     print("uploaded to aws")
 
@@ -91,11 +92,11 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error uploading file!!")
 
-    await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url)
+    # await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url)
     print("uploaded to pinecone")
 
     file_obj = create_file(db=session, name=file.filename,
-                           url=file_url, key=file_name, user_id=current_user.id)
+                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal)
 
     return success_response(data={"name": file.filename, "contentType": file.content_type, "url": file_obj.url, "key": file_obj.key})
 
@@ -103,8 +104,16 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
 @router.get("/all")
 async def user_files(session: SessionDep, current_user: CurrentUser):
     files = get_user_files(session, current_user.id)
-
-    return success_response(data=files)
+    data = []
+    for file in list(files):
+        latest_file_summary = get_latest_summary(db=session,file_id=file.id)
+        # Convert File object to dictionary
+        file_dict = file.model_dump()
+        if latest_file_summary:
+            # Add additional key to the dictionary
+            file_dict["summary_status"] = latest_file_summary.status
+        data.append(file_dict)
+    return success_response(data=data)
 
 
 @router.get("/{file_id}")
