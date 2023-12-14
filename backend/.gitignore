@@ -112,3 +112,8 @@ venv.bak/
 .mypy_cache/
 
 .idea/*
+
+/flan_t5_base_summarizer
+/flan_t5_base_tokenizer/
+
+files/*
