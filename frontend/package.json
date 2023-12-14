@@ -44,7 +44,7 @@
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "langchain": "^0.0.172",
-    "lucide-react": "^0.288.0",
+    "lucide-react": "^0.295.0",
     "next": "^14.0.3",
     "next-intl": "^3.3.2",
     "pdf-parse": "^1.1.1",
@@ -59,7 +59,7 @@
     "react-textarea-autosize": "^8.5.3",
     "react-window": "^1.8.10",
     "simplebar-react": "^3.2.4",
-    "tailwind-merge": "^1.14.0",
+    "tailwind-merge": "^2.1.0",
     "tailwindcss-animate": "^1.0.7",
     "uploadthing": "^5.7.2",
     "zod": "^3.22.4"

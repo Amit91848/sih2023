@@ -1,4 +1,4 @@
-import "../global.css";
+import "../globals.css";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { notFound } from "next/navigation";
