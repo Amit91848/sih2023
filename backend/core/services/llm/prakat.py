@@ -5,7 +5,6 @@ from transformers import AutoTokenizer
 
 
 class Batching():
-
     def __init__(self):
         self.alphabets= "([A-Za-z])"
         self.prefixes = "(Mr|St|Mrs|Ms|Dr)[.]"
@@ -87,10 +86,43 @@ class Batching():
         
         return final_batches
     
+    def divide_text_into_batches(self,text, batch_size):
+        """
+        Divides the text into batches, each ending with a full stop and as close to the specified batch size as possible.
 
+        Args:
+        text (str): The text to be divided.
+        batch_size (int): The desired batch size.
 
+        Returns:
+        list: A list of text batches.
+        """
+        # Split the text into sentences
+        sentences = text.split('. ')
 
+        # Initialize variables
+        batches = []
+        current_batch = ''
 
+        for sentence in sentences:
+            # Add full stop removed by split, except for the last sentence
+            if sentence != sentences[-1]:
+                sentence += '.'
+
+            if len(current_batch) + len(sentence) + 1 <= batch_size:
+                current_batch += sentence + ' '
+            else:
+                # If current batch is not empty, add it to the batches
+                if current_batch:
+                    batches.append(current_batch.strip())
+                current_batch = sentence + ' '
+
+        # Add the last batch if it's not empty
+        if current_batch:
+            batches.append(current_batch.strip())
+
+        return batches
+    
 class FlanModel():
 
     def __init__(self, model_name, tokenizer_name) -> None:
@@ -127,7 +159,7 @@ class FlanModel():
     
 
     def batch_summarize(self, text: str, batch_size: int):
-        batches = self.batcher.get_batches(text=text, batch_size=batch_size)
+        batches = self.batcher.divide_text_into_batches(text=text, batch_size=batch_size)
         summaries = []
         for batch in batches:
             summary = self.summarize(batch)
@@ -135,6 +167,7 @@ class FlanModel():
 
         full_summary = '\n'.join(summaries)
         return full_summary
+    
     
     def unload_model(self):
         # Unload or release resources associated with the model
