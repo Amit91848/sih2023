@@ -34,7 +34,7 @@ def main() -> None:
 main()
 
 app = FastAPI(
-    title=settings.PROJECT_NAME
+    title=settings.PROJECT_NAME,
 )
 
 if settings.BACKEND_CORS_ORIGINS:

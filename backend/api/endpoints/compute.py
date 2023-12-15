@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from core.utils import success_response
 
 import os, psutil, GPUtil; 
@@ -20,7 +20,7 @@ def get_pid_by_name(process_name):
             return proc.info['pid']
 
 @router.get("/info")
-async def get_compute():
+async def get_compute(request: Request):
     pid = os.getpid()
     print(pid)
     process = psutil.Process(pid)
@@ -31,10 +31,30 @@ async def get_compute():
     print(f"Ram: {ram}")
     print(f"CPU: {cpu_percent}")
 
+    model_name = None
+    state = request.app.state
+    
+    if state and hasattr(state, "current_model"):
+        if state.current_model is not None:
+            model_name = state.current_model.get_model_name()
+
     data = {
         "ram": f"{ram:.2f}",
         "cpu": cpu_percent,
-        "gpu": gpu_memory_usage
+        "gpu": gpu_memory_usage,
+        "model_name": model_name
     }
 
     return success_response(data=data)
+
+@router.get("/model")
+async def get_model(request: Request):
+    model_name = None
+    state = request.app.state
+    print(state)
+    
+    if state and hasattr(state, "current_model"):
+        model_name = state.current_model.get_model_name()
+            
+    return success_response(data=model_name)
+    

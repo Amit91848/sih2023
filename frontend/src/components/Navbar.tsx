@@ -2,10 +2,11 @@
 // import Link from "next/link";
 import { Link } from "@/lib/navigation";
 import MaxWidthWrapper from "./MaxWidthWrapper";
-import { buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import LocaleSwitcher from "./LocaleSwitcher";
 import { useQuery } from "@tanstack/react-query";
 import { getComputeInfo } from "@/api/compute/getCompute";
+import { ChevronDown } from "lucide-react";
 
 const Navbar = () => {
 	const { data: compute } = useQuery({
@@ -28,7 +29,14 @@ const Navbar = () => {
 							<div className="whitespace-nowrap">RAM: {compute?.data?.ram} MB</div>
 							<div className="whitespace-nowrap">CPU: {compute?.data?.cpu} %</div>
 						</div>
-						<div className="w-full text-center ">LOAD MODEL</div>
+						<div className="w-full text-center border-gray-300 border bg-gray-200 rounded-lg flex items-center justify-center">
+							<Button variant="ghost" className="w-full ">
+								{compute?.data?.model_name
+									? compute.data.model_name
+									: "Select a Model to load"}
+								<ChevronDown width={2} height={2} />
+							</Button>
+						</div>
 					</div>
 
 					<div className="hidden items-center space-x-4 sm:flex">

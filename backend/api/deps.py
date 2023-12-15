@@ -17,6 +17,7 @@ from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddi
 from core.services.embedding.openai import get_openai_embeddings
 from langchain_core.embeddings import Embeddings
 from core.services.llm.prakat import FlanModel
+from core.services.prakat.models import FlanT5_CT2
 
 
 def get_db() -> Generator:
@@ -52,7 +53,8 @@ def create_vector_store_service():
         return ChromaService()
 
 def create_llm_model_service():
-    return FlanModel(model_name="flan_t5_base_summarizer",tokenizer_name="flan_t5_base_tokenizer")
+    # return FlanModel(model_name="flan_t5_base_summarizer",tokenizer_name="flan_t5_base_tokenizer")
+    return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]

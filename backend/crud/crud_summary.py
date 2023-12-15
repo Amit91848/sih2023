@@ -32,6 +32,11 @@ def get_latest_summary(db: Session, file_id: int):
     file_latest_summary = db.query(Summary).filter(Summary.file_id == file_id).order_by(desc(Summary.updated_at)).first()
     return file_latest_summary
 
+def get_all_summaries_by_file_id(db: Session, file_id: int, type: BatchSize):
+    summaries = db.query(Summary).filter(Summary.file_id == file_id, Summary.type == type).first()
+
+    return summaries
+
 # def get_user_files(db: Session, user_id: int):
 #     files = db.query(File).filter(File.user_id == user_id).all()
 

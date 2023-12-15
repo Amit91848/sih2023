@@ -4,6 +4,7 @@ export interface IComputeInfo {
 	ram: string;
 	gpu: string;
 	cpu: string;
+	model_name: string | null;
 }
 
 export const getComputeInfo = async () => {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request
 from api.deps import create_llm_model_service, SessionDep, CurrentUser
 from pydantic import BaseModel
 from crud.crud_file import get_user_file
@@ -12,12 +12,15 @@ class SummarizeBody(BaseModel):
 
 router = APIRouter()
 
-def call_batch_summarize(session: SessionDep, txt_content: str, summary_id: int, batch_size: BatchSize):
+def call_batch_summarize(request: Request, session: SessionDep, txt_content: str, summary_id: int, batch_size: BatchSize):
   llm = create_llm_model_service()
-  llm.batch_summarize(session=session, summary_id=summary_id, text=txt_content[:500], batch_size=batch_size)
+  request.app.state.current_model = llm
+  summary = llm.batch_summarize(session=session, summary_id=summary_id, text=txt_content[:2000], batch_size=batch_size)
+  request.app.state.current_model = None
+  return summary
 
 @router.post("/summarize")
-async def summarize_text(session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):
+async def summarize_text(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):
   # try:
     file = get_user_file(db=session, user_id=currentUser.id, file_id=body.fileId)
 
@@ -33,9 +36,10 @@ async def summarize_text(session: SessionDep, currentUser: CurrentUser, body: Su
       
     db_summary = create_summary(session, type=body.batchSize, file_id=file[0].id, summary="", user_id=currentUser.id, status=Status.PENDING)
       
-    bg_tasks.add_task(call_batch_summarize, session=session, summary_id=db_summary.id, txt_content=txt_content[:500], batch_size=body.batchSize)
+    bg_tasks.add_task(call_batch_summarize, request=request, session=session, summary_id=db_summary.id, txt_content=txt_content, batch_size=body.batchSize)
+    # summary = call_batch_summarize(request=request, session=session, summary_id=1, txt_content=txt_content[:20000], batch_size=body.batchSize)
       
-    return {"text_content": txt_content[:500], "message": "We are processing your summary request"}
+    return {"text_content": txt_content}
   # finally:
   #   llm.unload_model()
   

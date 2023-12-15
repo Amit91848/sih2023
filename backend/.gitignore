@@ -117,3 +117,5 @@ venv.bak/
 /flan_t5_base_tokenizer/
 
 files/*
+
+models/*
