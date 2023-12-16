@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 
 
 class PineconeService(VectorStoreService):
-    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str):
+    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str, file_id: int):
         Pinecone.from_documents(
             documents=documents, embedding=embedding, index_name=index_name)
 

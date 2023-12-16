@@ -38,20 +38,15 @@ async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, s
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Error storing message")
 
-    # model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-
-    # vectorStore = Pinecone.from_existing_index("prakat", embeddings)
-
-    results = vector_store.similarity_search(body.message, 5, {})
-    print(results)
-    context_text = "\n\n".join([result.page_content for result in results])
+    results = vector_store.similarity_search(body.message, 5, {"file_id": file[0].id})
+    context_text = "\n\n".join([result for result in results])
 
     prev_messages = find_prev_messages(
         session, body.fileId, current_user.id, 6)
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
     message_prompt = """
-                Use the following pieces of context (Extracted from user uploaded document) (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer.
+                Use the following pieces of context (Extracted from user uploaded document) (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer. If question does not exist in context do not answer
 
                 \n----------------\n
                     PREVIOUS CONVERSATION:

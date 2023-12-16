@@ -16,8 +16,7 @@ from core.services.vector_store.service import VectorStoreService, PineconeServi
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from core.services.embedding.openai import get_openai_embeddings
 from langchain_core.embeddings import Embeddings
-from core.services.prakat.models import PrakatSummarizerModel
-from core.services.prakat.models import PrakatGrammarCheckerModel
+from core.services.prakat.models import FlanT5_CT2
 
 
 def get_db() -> Generator:
@@ -39,10 +38,7 @@ def create_upload_service():
 
 
 def get_embeddings():
-    if settings.OPENAI_API_KEY:
-        return get_openai_embeddings()
-    else:
-        return SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+    return SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
 
 def create_vector_store_service():
@@ -53,10 +49,10 @@ def create_vector_store_service():
         return ChromaService()
 
 def create_grammar_check_model_service():
-    return PrakatGrammarCheckerModel(model_path=os.path.join(os.getcwd(),"models", "t5_grammarcheck_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_grammarcheck_ct2")
+    return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_grammarcheck_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_grammarcheck_ct2")
 
 def create_summarizer_model_service():
-    return PrakatSummarizerModel(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
+    return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]

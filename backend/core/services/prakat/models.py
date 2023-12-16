@@ -7,12 +7,11 @@ from core.types import BatchSize
 
 
 # FlanModel
-class PrakatSummarizerModel():
+class FlanModel():
 
     def __init__(self, model_path: str,model_name: str, tokenizer_path: str=None) -> None:
         super().__init__()
 
-        self.model_name = model_path
         self.model_name = model_name
 
         if tokenizer_path==None:
@@ -21,7 +20,7 @@ class PrakatSummarizerModel():
             self.tokenizer_name = tokenizer_path
 
         try:
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
 
         except Exception as e:
             raise ValueError(f"Input file path is not a valid transformer model or name of huggingface repo.\n{e}")
@@ -116,8 +115,7 @@ class PrakatSummarizerModel():
 
 
 
-# FlanT5_CT2
-class PrakatGrammarCheckerModel():
+class FlanT5_CT2():
 
     def __init__(self, model_path: str, tokenizer_path: str, model_name: str) -> None:
         super().__init__()
