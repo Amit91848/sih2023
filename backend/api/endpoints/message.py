@@ -9,7 +9,7 @@ from core.utils import success_response
 from openai import OpenAI
 from core.settings import settings
 from langchain.vectorstores.pinecone import Pinecone
-from api.deps import EmbeddingDep, VectorStoreDep
+from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
 
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -38,7 +38,8 @@ async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, s
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Error storing message")
 
-    results = vector_store.similarity_search(body.message, 5, {"file_id": file[0].id})
+    results = vector_store.similarity_search(body.message, 2, {"file_id": file[0].id})
+    print(results)
     context_text = "\n\n".join([result for result in results])
 
     prev_messages = find_prev_messages(
@@ -60,23 +61,29 @@ async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, s
                   USER INPUT: {}
              """
 
-    ai_res = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        temperature=0,
-        # stream=True,
-        messages=[
-            {"role": "system",
-                "content": "Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format."},
-            {"role": "user", "content": message_prompt.format(formatted_prev_messages, context_text, body.message)
+    # ai_response = openai_client.chat.completions.create(
+    #     model="gpt-3.5-turbo",
+    #     temperature=0,
+    #     stream=True,
+    #     messages=[
+    #         {"role": "system",
+    #             "content": "Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format."},
+    #         {"role": "user", "content": message_prompt.format(formatted_prev_messages, context_text, body.message)
 
-             }
-        ]
-    )
+    #          }
+    #     ]
+    # )
+    SYS_PROMPT = """You are an intelligent assistant named PrakatBot, developed by Prakat Systems. Your directive and goal is to produce valid and good answers to user questions. If context is provided answer the user question from the context provided. DO NOT give any wrong answers. If you don't know the answer, just say that you don't know, don't try to make up an answer. Be honest and helpful.
+    """
+    rag_ai = create_rag_model_service()
+    ai_response = rag_ai.inference(query=body.message ,sys_msg=SYS_PROMPT, context=results)
+
 
     ai_message = create_message(
-        session, body.fileId, current_user.id, ai_res.choices[0].message.content, False)
+        session, body.fileId, current_user.id, ai_response, False)
 
-    return ai_res
+    print(f"Ai-response: {ai_response}")
+    return ai_response
 
 
 @router.get("/all")

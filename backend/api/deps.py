@@ -17,6 +17,7 @@ from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddi
 from core.services.embedding.openai import get_openai_embeddings
 from langchain_core.embeddings import Embeddings
 from core.services.prakat.models import FlanT5_CT2
+from core.services.prakat.llama import LocalModel
 
 
 def get_db() -> Generator:
@@ -53,6 +54,9 @@ def create_grammar_check_model_service():
 
 def create_summarizer_model_service():
     return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
+
+def create_rag_model_service():
+    return LocalModel(gguf_filepath=os.path.join(os.getcwd(), "models", "Wizard-Vicuna-7B-Uncensored.Q4_0.gguf"), context_window=1024)
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
