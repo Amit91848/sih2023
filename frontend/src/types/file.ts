@@ -15,4 +15,5 @@ export interface IFile {
 	id: number;
 	isLocal: boolean;
 	summary_status?: Status;
+	size: number;
 }

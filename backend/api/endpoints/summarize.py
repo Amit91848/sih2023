@@ -5,10 +5,15 @@ from crud.crud_file import get_user_file
 from crud.crud_summary import create_summary, update_summary
 from langchain.document_loaders.pdf import PyMuPDFLoader
 from core.types import BatchSize,Status
+from core.services.prakat.models import FlanT5_CT2
+import os
 
 class SummarizeBody(BaseModel):
   fileId: int
   batchSize: BatchSize
+
+class GrammarBody(BaseModel):
+  txt: str
 
 router = APIRouter()
 
@@ -18,6 +23,12 @@ def call_batch_summarize(request: Request, session: SessionDep, txt_content: str
   summary = llm.batch_summarize(session=session, summary_id=summary_id, text=txt_content[:2000], batch_size=batch_size)
   request.app.state.current_model = None
   return summary
+
+@router.post("/grammarCheck")
+async def grammar_check(request: Request, session: SessionDep, body: GrammarBody):
+  grammar_model = FlanT5_CT2(model_path="E:/sih2023/backend/models/t5_grammarcheck_ct2/", tokenizer_path="E:/sih2023/backend/models/flan_t5_base_tokenizer")
+  correct_str = grammar_model.grammar_check(body.txt)
+  return correct_str
 
 @router.post("/summarize")
 async def summarize_text(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):

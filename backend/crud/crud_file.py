@@ -7,8 +7,8 @@ from models import File
 from core.security import get_password_hash, verify_password
 
 
-def create_file(db: Session, name: str, url: str, key: str, user_id: int, isLocal: bool):
-    db_file = File(name=name, url=url, key=key, user_id=user_id, isLocal=isLocal)
+def create_file(db: Session, name: str, url: str, key: str, user_id: int, isLocal: bool, size: int):
+    db_file = File(name=name, url=url, key=key, user_id=user_id, isLocal=isLocal, size=size)
     db.add(db_file)
     db.commit()
     db.refresh(db_file)

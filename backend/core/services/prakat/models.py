@@ -1,14 +1,11 @@
-from .batching import Batching
-from .loader import Model
+from prakat.batching import Batching
 from transformers import AutoModelForSeq2SeqLM
 from transformers import AutoTokenizer
 from ctranslate2 import Translator
-from sqlmodel import Session
-from core.types import BatchSize, Status
-from crud.crud_summary import update_summary
 
 
-class FlanModel(Model):
+
+class FlanModel():
 
 
     def __init__(self, model_path: str, tokenizer_path: str=None) -> None:
@@ -44,6 +41,7 @@ class FlanModel(Model):
     
 
     def summarize(self, text: str) -> str:
+        text = self.batcher.clean_text(text)
         input_token_length = len(self.tokenizer.encode(text))
         max_len = int(input_token_length * 0.5)
         min_len = int(0.1 * input_token_length)
@@ -65,6 +63,7 @@ class FlanModel(Model):
     
 
     def batch_summarize(self, text: str, batch_size: int) -> str:
+        text = self.batcher.clean_text(text)
         batches = self.batcher.get_batches(text=text, batch_size=batch_size)
         summaries = []
         for batch in batches:
@@ -73,15 +72,45 @@ class FlanModel(Model):
 
         full_summary = '\n'.join(summaries)
         return full_summary
+    
 
-class FlanT5_CT2(Model):
+    def grammar_check(self, text: str, beam_count: int=6) -> str:
+        text = self.batcher.clean_text(text)
+        input_token_length = len(self.tokenizer.encode(text))
+        inputs = self.tokenizer(text, return_tensors="pt")
+        outputs = self.model.generate(
+            **inputs, 
+            max_length = input_token_length, 
+            num_beams = beam_count, 
+            early_stopping = True, 
+            do_sample = True,
+            temperature = 0.3,
+        )
+        summary = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return summary
 
 
-    def __init__(self, model_path: str, tokenizer_path: str, model_name: str) -> None:
+    def set_grammar_check(self, text: str, set_count: int) -> str:
+        text = self.batcher.clean_text(text)
+        sentence_sets = self.batcher.get_sets(text=text, set_size=set_count)
+        checked = []
+        for sentence_set in sentence_sets:
+            correction = self.grammar_check(sentence_set)
+            checked.append(correction)
+
+        full_correction = ' '.join(checked)
+        return full_correction
+
+
+
+
+class FlanT5_CT2():
+
+
+    def __init__(self, model_path: str, tokenizer_path: str) -> None:
         super().__init__()
 
         self.model_path = model_path
-        self.name = model_name
 
         try:
             self.translator =  Translator(model_path)
@@ -114,6 +143,7 @@ class FlanT5_CT2(Model):
     
 
     def summarize(self, text: str) -> str:
+        text = self.batcher.clean_text(text)
         prompt = 'summarize: ' + text.strip()
         input_tokens = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode(prompt))
 
@@ -130,27 +160,20 @@ class FlanT5_CT2(Model):
         return output_text
     
 
-    def batch_summarize(self, session: Session, summary_id: int,  text: str, batch_size: BatchSize) -> str:
-        size = 2048
-        if batch_size == BatchSize.LONG:
-            size = 1024
-        elif batch_size == BatchSize.MEDIUM:
-            size = 2048
-        elif batch_size == BatchSize.SHORT:
-            size = 4096
-        batches = self.batcher.get_batches(text=text, batch_size=size)
+    def batch_summarize(self, text: str, batch_size: int) -> str:
+        text = self.batcher.clean_text(text)
+        batches = self.batcher.get_batches(text=text, batch_size=batch_size)
         summaries = []
         for batch in batches:
             summary = self.summarize(batch)
             summaries.append(summary)
 
         full_summary = '\n'.join(summaries)
-        print(f"summary ->>>>>>>>>>>>>>>>>>> {full_summary}")
-        db_summary = update_summary(db=session, summary_id=summary_id, status=Status.SUCCESS, summary=full_summary)
         return full_summary
     
 
     def batch_summarize_native(self, text: str, token_batch_size: int) -> str:
+        text = self.batcher.clean_text(text)
         input_tokens = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode(text))
 
         results = self.translator.translate_batch(
@@ -168,5 +191,32 @@ class FlanT5_CT2(Model):
         return output_text
     
 
-    def get_model_name(self):
-        return self.name
+    def grammar_check(self, text: str):
+        text = self.batcher.clean_text(text)
+        input_tokens = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode(text))
+
+        results = self.translator.translate_batch(
+            [input_tokens],
+            length_penalty = 1,
+            beam_size = 6,
+            patience = 1.2
+        )
+
+        output_tokens = results[0].hypotheses[0]
+        output_text = self.tokenizer.decode(self.tokenizer.convert_tokens_to_ids(output_tokens))
+
+        return output_text
+    
+
+    def set_grammar_check(self, text: str, set_count: int):
+        for i in range(len):
+            text[i] = self.batcher.clean_text(text[i])
+            
+        sentence_sets = self.batcher.get_sets(text=text, set_size=set_count)
+        checked = []
+        for sentence_set in sentence_sets:
+            correction = self.grammar_check(sentence_set)
+            checked.append(correction)
+
+        full_correction = ' '.join(checked)
+        return full_correction

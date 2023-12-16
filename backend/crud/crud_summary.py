@@ -1,9 +1,10 @@
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
-from models import Summary
+from models import Summary, File
 from typing import Optional
 from core.types import BatchSize, Status
+from sqlmodel import select
 
 def create_summary(db: Session, type: BatchSize, file_id: int, summary: str, user_id: int, status: Status):
     db_summary = Summary(type=type, file_id=file_id, summary=summary, user_id=user_id, status=status)
@@ -33,9 +34,8 @@ def get_latest_summary(db: Session, file_id: int):
     return file_latest_summary
 
 def get_all_summaries_by_file_id(db: Session, file_id: int, type: BatchSize):
-    summaries = db.query(Summary).filter(Summary.file_id == file_id, Summary.type == type).first()
-
-    return summaries
+    summary =  db.query(Summary).filter(Summary.file_id == file_id, Summary.type == type).first()
+    return summary
 
 # def get_user_files(db: Session, user_id: int):
 #     files = db.query(File).filter(File.user_id == user_id).all()

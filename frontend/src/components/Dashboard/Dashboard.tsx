@@ -23,6 +23,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SimpleBar from "simplebar-react";
 import { BatchSize } from "@/api/file/summarizeFile";
 import { getFileSummary } from "@/api/file/getFileSummary";
+import ReactDiffViewer from "react-diff-viewer-continued";
+import { getFile } from "@/api/file/getFile";
+import { msToTime } from "@/lib/utils";
+
+enum DiffMethod {
+	CHARS = "diffChars",
+	WORDS = "diffWords",
+	WORDS_WITH_SPACE = "diffWordsWithSpace",
+	LINES = "diffLines",
+	TRIMMED_LINES = "diffTrimmedLines",
+	SENTENCES = "diffSentences",
+	CSS = "diffCss",
+}
 
 const Dashboard = () => {
 	const columns = [
@@ -84,6 +97,27 @@ const Dashboard = () => {
 	});
 
 	const [summaryFileId, setSummaryFileId] = useState<number | null>(null);
+	const [dialogContent, setDialogContent] = useState<string | null>(null);
+
+	const oldCode = `
+	const a = 10
+	const b = 10
+	const c = () => console.log('foo')
+	
+	if(a > 10) {
+		console.log('bar')
+	}
+	
+	console.log('done')
+	`;
+	const newCode = `
+	const a = 10
+	const boo = 10
+	
+	if(a === 10) {
+		console.log('bar')
+	}
+	`;
 
 	return (
 		<main className="mx-auto max-w-7xl md:p-10">
@@ -101,29 +135,52 @@ const Dashboard = () => {
 					</TabsList>
 					<TabsContent value="files">
 						<Dialog>
-							<Files setSummaryFileId={setSummaryFileId} />
-							<DialogContent className="p-5 max-w-5xl w-full min-h-[calc(100vh-15rem)]">
-								<Tabs
-									className="grid grid-cols-[1fr_3fr] gap-6 items-start"
-									defaultValue="summary-type"
-								>
-									<VTabsList className="bg-transparent bg-red-400 h-full w-full justify-center">
-										<VTabsTrigger value="long">Long</VTabsTrigger>
-										<VTabsTrigger value="medium">Medium</VTabsTrigger>
-										<VTabsTrigger value="short">Short</VTabsTrigger>
-									</VTabsList>
-									<div className="w-full bg-green-400 h-full flex-1">
-										<TabsContent value="long">
-											<Summary batchSize={BatchSize.LONG} fileId={summaryFileId} />
-										</TabsContent>
-										<TabsContent value="medium">
-											<Summary batchSize={BatchSize.MEDIUM} fileId={summaryFileId} />
-										</TabsContent>
-										<TabsContent value="short">
-											<Summary batchSize={BatchSize.SHORT} fileId={summaryFileId} />
-										</TabsContent>
+							<Files
+								setSummaryFileId={setSummaryFileId}
+								setDialogContent={setDialogContent}
+							/>
+							<DialogContent className="p-8 max-w-7xl w-full min-h-[calc(100vh-15rem)]">
+								{dialogContent === "summary" ? (
+									<Tabs
+										className="grid grid-cols-[1fr_3fr] gap-6 items-start"
+										defaultValue="summary-type"
+									>
+										<VTabsList className="bg-transparent h-full w-full justify-center gap-3">
+											<VTabsTrigger value="long" className="text-lg">
+												Long
+											</VTabsTrigger>
+											<VTabsTrigger value="medium" className="text-lg">
+												Medium
+											</VTabsTrigger>
+											<VTabsTrigger value="short" className="text-lg">
+												Short
+											</VTabsTrigger>
+										</VTabsList>
+										<div className="w-full h-full flex">
+											<TabsContent value="long" className="flex-1 h-full">
+												<Summary batchSize={BatchSize.LONG} fileId={summaryFileId} />
+											</TabsContent>
+											<TabsContent value="medium">
+												<Summary batchSize={BatchSize.MEDIUM} fileId={summaryFileId} />
+											</TabsContent>
+											<TabsContent value="short">
+												<Summary batchSize={BatchSize.SHORT} fileId={summaryFileId} />
+											</TabsContent>
+										</div>
+									</Tabs>
+								) : (
+									// <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
+									<div className="overflow-scroll max-h-[calc(100vh-10rem)]">
+										<ReactDiffViewer
+											oldValue={oldCode}
+											newValue={newCode}
+											splitView={true}
+											leftTitle={`Input Text`}
+											rightTitle={`Grammar Checked`}
+										/>
 									</div>
-								</Tabs>
+									// </SimpleBar>
+								)}
 							</DialogContent>
 						</Dialog>
 					</TabsContent>
@@ -151,11 +208,30 @@ const Summary = ({ batchSize, fileId }: SummaryProps) => {
 		queryKey: ["file_id", fileId, "batch_size", batchSize],
 	});
 
-	console.log(data);
+	const { data: file_data } = useQuery({
+		queryFn: () => getFile({ file_id: fileId }),
+	});
+
+	let timeTaken;
+	if (data && data.data) {
+		const timeDiff = new Date(data.data.updated_at) - new Date(data.data.created_at);
+		console.log(timeDiff);
+		timeTaken = msToTime(timeDiff);
+	}
+
+	const words = data?.data?.summary.trim().split(/\s+/);
+
 	return (
-		<div className="p-7 ">
-			{data?.data?.summary}
-			{batchSize} {fileId}
+		<div className="flex flex-col gap-2">
+			<div className="flex justify-between bg-gray-100 p-4 rounded-lg">
+				<p className="font-semibold">{file_data?.data?.name}</p>
+				<p>Time taken: {timeTaken}</p>
+				<p>Word Count: {words?.length}</p>
+			</div>
+			<div className="border border-gray-300 p-4 rounded-lg flex-1 h-full">
+				{data?.data?.summary}
+				{batchSize} {fileId}
+			</div>
 		</div>
 	);
 };

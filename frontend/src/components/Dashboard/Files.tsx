@@ -3,11 +3,11 @@ import { getUserFiles } from "@/api/file/getUserFiles";
 import { summarizeFile, BatchSize } from "@/api/file/summarizeFile";
 import { IFile, Status } from "@/types";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { MoreVertical, Plus, Loader2, Check, XCircle } from "lucide-react";
+import { MessageSquareMore, MoreVertical, SpellCheck, Trash } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import { EmptyScreen } from "../EmptyScreen";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { filesize } from "filesize";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -22,13 +22,15 @@ import { cn } from "@/lib/utils";
 import { Link } from "@/lib/navigation";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { DialogContent } from "@radix-ui/react-dialog";
-import { Button } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
+import { format } from "date-fns";
 
 interface IFilesProps {
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
+	setDialogContent: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export const Files = ({ setSummaryFileId }: IFilesProps) => {
+export const Files = ({ setSummaryFileId, setDialogContent }: IFilesProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const { data: files, isLoading } = useQuery({
@@ -47,7 +49,12 @@ export const Files = ({ setSummaryFileId }: IFilesProps) => {
 								new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
 						)
 						.map((file) => (
-							<File setSummaryFileId={setSummaryFileId} file={file} key={file.id} />
+							<File
+								setSummaryFileId={setSummaryFileId}
+								setDialogContent={setDialogContent}
+								file={file}
+								key={file.id}
+							/>
 						))}
 				</ul>
 			) : isLoading ? (
@@ -62,9 +69,10 @@ export const Files = ({ setSummaryFileId }: IFilesProps) => {
 interface FileProps {
 	file: IFile;
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
+	setDialogContent: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-const File = ({ file, setSummaryFileId }: FileProps) => {
+const File = ({ file, setSummaryFileId, setDialogContent }: FileProps) => {
 	const queryClient = useQueryClient();
 	const { mutate: deleteFile } = useMutation({
 		mutationFn: deleteUserFile,
@@ -118,10 +126,11 @@ const File = ({ file, setSummaryFileId }: FileProps) => {
 												}}
 											>
 												<DropdownMenuItem className="cursor-pointer">
+													<MessageSquareMore className="mr-2 h-4 w-4" />
 													Chat With Doc
 												</DropdownMenuItem>
 											</Link>
-
+											<DropdownMenuSeparator />
 											<DropdownMenuSub>
 												<DropdownMenuSubTrigger
 													disabled={
@@ -181,21 +190,33 @@ const File = ({ file, setSummaryFileId }: FileProps) => {
 												<DialogTrigger
 													onClick={() => {
 														setSummaryFileId(file.id);
+														setDialogContent("summary");
 														console.log(file.id);
 													}}
 												>
-													<p> View Generated Summaries </p>
+													<p> View Summaries </p>
 												</DialogTrigger>
 											</DropdownMenuItem>
+											<DropdownMenuSeparator />
 											<DropdownMenuItem className="cursor-pointer">
-												Grammar Check
+												<SpellCheck className="mr-2 h-4 w-4" />
+
+												<DialogTrigger
+													onClick={() => {
+														// setSummaryFileId(file.id);
+														// console.log(file.id);
+														setDialogContent("grammar-check");
+													}}
+												>
+													Grammar Check
+												</DialogTrigger>
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />
 											<DropdownMenuItem
-												color="red"
-												className="cursor-pointer font-semibold "
+												className="cursor-pointer hover:!bg-red-500 hover:!text-white"
 												onClick={() => deleteFile({ file_id: file.id })}
 											>
+												<Trash className="mr-2 h-4 w-4" />
 												Delete
 											</DropdownMenuItem>
 										</DropdownMenuContent>
@@ -206,8 +227,54 @@ const File = ({ file, setSummaryFileId }: FileProps) => {
 					</div>
 				</div>
 
-				<div className="px-6 mt-4 grid grid-cols-2 place-items-center py-2 gap-6 text-xs text-zinc-500">
-					<div className="flex items-center gap-2">
+				<div className="px-6 mt-4 grid grid-cols-2 place-items-center py-2 gap-2">
+					<div className="w-36">{filesize(file.size, { standard: "jedec" })}</div>
+					<div className="w-36">{format(new Date(file.created_at), "MMM yyyy")}</div>
+					{/* <Button variant="ghost" className="w-full">
+						View Summaries
+					</Button>
+					<div
+						className={buttonVariants({
+							variant: "ghost",
+							size: "sm",
+							className: "items-center flex gap-2 cursor-pointer",
+						})}
+					>
+						<SpellCheck />
+						View Grammar Check
+					</div> */}
+					{/* <DropdownMenuItem className="cursor-pointer">
+												 <Dialog> 
+												<DialogTrigger
+													onClick={() => {
+														setSummaryFileId(file.id);
+														setDialogContent("summary");
+														console.log(file.id);
+													}}
+												>
+													<p> View Generated Summaries </p>
+												</DialogTrigger>
+											</DropdownMenuItem>
+											<DropdownMenuItem className="cursor-pointer">
+												<DialogTrigger
+													onClick={() => {
+														// setSummaryFileId(file.id);
+														// console.log(file.id);
+														setDialogContent("grammar-check");
+													}}
+												>
+													<p> Grammar Check</p>
+												</DialogTrigger>
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												color="red"
+												className="cursor-pointer font-semibold "
+												onClick={() => deleteFile({ file_id: file.id })}
+											>
+												Delete
+											</DropdownMenuItem> */}
+					{/* <div className="flex items-center gap-2">
 						<Plus className="h-4 w-4" />
 						{format(new Date(file.created_at), "MMM yyyy")}
 					</div>
@@ -223,7 +290,7 @@ const File = ({ file, setSummaryFileId }: FileProps) => {
 						) : (
 							<XCircle className="text-red-600" />
 						)}
-					</div>
+					</div> */}
 				</div>
 			</li>
 		</>

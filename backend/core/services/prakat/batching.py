@@ -2,7 +2,6 @@ import re
 
 
 
-
 class Batching():
 
     def __init__(self):
@@ -56,37 +55,6 @@ class Batching():
         return sentences
     
 
-    def get_sets(self, text:str, set_size:int) -> list:
-        
-        sentences = self.split_into_sentences(text)
-
-        fullset = []
-
-        for i in range(0, len(sentences), set_size):
-            sentence_set = sentences[i:i+set_size]
-            fullset.append(sentence_set)
-
-        return fullset
-                
-
-    
-    def get_batches(self, text:str, batch_size:int) -> list[str]:
-        
-        sentences = self.split_into_sentences(text)
-
-        final_batches = []
-        batch = ""
-        for sentence in sentences:
-            if len(batch+" "+sentence) <= batch_size:
-                batch = batch + " " + sentence
-                batch = batch.strip()
-            else:
-                final_batches.append(batch.strip())
-                batch = ""
-        
-        return final_batches
-    
-
     def strip_after_last_full_stop(self, text: str) -> str:
         """
         Strip the text of everything after the last full stop that ends a sentence.
@@ -107,4 +75,61 @@ class Batching():
         return ' '.join(sentences[:last_full_stop_index + 1]).strip()
     
 
+    def clean_text(self, text:str) -> str:
+
+        # Remove control characters
+        cleaned = re.sub(r'\\x[0-9a-fA-F]{2,3}', '', text)
+
+        # Replace newline with space
+        cleaned = cleaned.replace('\n', ' ')
+
+        # Remove remaining sequence of special chars
+        cleaned = re.sub(r'[\^>]+', ' ', cleaned)
+
+        # Remove square brackets and content between them
+        cleaned = re.sub(r'\[[^\]]*\]', '', cleaned)
+        
+        # Replace multiple spaces with a single space
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+        # Remove last unfinished sentence
+        for i in range(len(cleaned)-1, -1, -1):
+            if cleaned[i]==".":
+                cleaned = cleaned[:i+1]
+                break
+            
+        return cleaned
+    
+    
+    def get_sets(self, text:str, set_size:int) -> list:
+        
+        sentences = self.split_into_sentences(text)
+
+        fullset = []
+
+        for i in range(0, len(sentences), set_size):
+            sentence_set = sentences[i:i+set_size]
+            fullset.append(sentence_set)
+
+        return fullset    
+
+    
+    def get_batches(self, text:str, batch_size:int) -> list[str]:
+        
+        sentences = self.split_into_sentences(text)
+
+        final_batches = []
+        batch = ""
+        for sentence in sentences:
+            if len(batch+" "+sentence) <= batch_size:
+                batch = batch + " " + sentence
+                batch = batch.strip()
+            else:
+                final_batches.append(batch.strip())
+                batch = ""
+        
+        return final_batches
+    
+
+    
 

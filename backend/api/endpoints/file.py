@@ -97,7 +97,7 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
     print("uploaded to pinecone")
 
     file_obj = create_file(db=session, name=file.filename,
-                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal)
+                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size)
 
     return success_response(data={"name": file.filename, "contentType": file.content_type, "url": file_obj.url, "key": file_obj.key})
 

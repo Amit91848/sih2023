@@ -52,6 +52,7 @@ class File(SQLModel, table=True):
     isLocal: bool
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+    size: int
 
     user_id: int = Field(foreign_key="user.id")  # Define the foreign key here
     user: "User" = Relationship(back_populates="files")
