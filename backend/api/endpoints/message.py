@@ -43,6 +43,7 @@ async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, s
     # vectorStore = Pinecone.from_existing_index("prakat", embeddings)
 
     results = vector_store.similarity_search(body.message, 5, {})
+    print(results)
     context_text = "\n\n".join([result.page_content for result in results])
 
     prev_messages = find_prev_messages(

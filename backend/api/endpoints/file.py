@@ -35,36 +35,36 @@ class FileUploadBody(BaseModel):
     pass
 
 
-async def upload_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, file_url: str):
-    file_blob = requests.get(file_url)
+async def upload_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, file_url: str, file_id: int):
+    # file_blob = requests.get(file_url)
 
-    if file_blob.status_code == 200:
-        file_content = file_blob.content
+    # if file_blob.status_code == 200:
+    #     file_content = file_blob.content
 
-        # Create a temporary file with a shorter name
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-            temp_file.write(file_content)
-            temp_pdf_path = temp_file.name
+    #     # Create a temporary file with a shorter name
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+    #         temp_file.write(file_content)
+    #         temp_pdf_path = temp_file.name
 
-        try:
-            pdf_loader = PyMuPDFLoader(file_path=temp_pdf_path)
-            pdf = pdf_loader.load()
+        # try:
+    pdf_loader = PyMuPDFLoader(file_path=file_url)
+    pdf = pdf_loader.load()
 
-            try:
-                vector_store.upload_document(
-                    documents=pdf, embedding=embeddings, index_name="prakat")
-            except ApiException:
-                print("err while uploading to pinecone ")
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Error uploading to pinecone")
+    try:
+        vector_store.upload_document(
+            documents=pdf, embedding=embeddings, index_name="prakat", file_id=file_id)
+    except ApiException:
+        print("err while uploading to pinecone ")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Error uploading to pinecone")
 
-        finally:
-            # Clean up: Delete the temporary file
-            if temp_pdf_path:
-                try:
-                    os.remove(temp_pdf_path)
-                except Exception as e:
-                    print(f"Error deleting temporary file: {e}")
+        # finally:
+        #     # Clean up: Delete the temporary file
+        #     if temp_pdf_path:
+        #         try:
+        #             os.remove(temp_pdf_path)
+        #         except Exception as e:
+        #             print(f"Error deleting temporary file: {e}")
 
 
 @router.post("/upload")
@@ -94,11 +94,12 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error uploading file!!")
 
-    # await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url)
     print("uploaded to pinecone")
 
     file_obj = create_file(db=session, name=file.filename,
                            url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size)
+    
+    await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url, file_id=file_obj.id)
 
     return success_response(data={"name": file.filename, "contentType": file.content_type, "url": file_obj.url, "key": file_obj.key})
 

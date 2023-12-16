@@ -6,7 +6,7 @@ from typing import List, Optional, Dict
 
 class VectorStoreService(ABC):
     @abstractmethod
-    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str):
+    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str, file_id: int):
         pass
 
     def similarity_search(self, query: str, limit: int, metadata_filter: Optional[Dict[str, str]]) -> List[Document]:

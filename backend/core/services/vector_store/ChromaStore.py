@@ -15,10 +15,10 @@ class ChromaService(VectorStoreService):
             cls._instance._db = None
         return cls._instance
 
-    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str):
+    def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str, file_id: int):
         try:
             self._db = Chroma.from_documents(documents=documents,
-                                             embedding=embedding, collection_name=index_name, persist_directory=os.getcwd())
+                                             embedding=embedding, collection_name=index_name, persist_directory=os.getcwd(), collection_metadata={"file_id":file_id})
         except Exception as e:
             print(f"Error uploading documents to Chroma: {e}")
 
