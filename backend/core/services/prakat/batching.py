@@ -81,7 +81,7 @@ class Batching():
         cleaned = re.sub(r'\\x[0-9a-fA-F]{2,3}', '', text)
 
         # Replace newline with space
-        cleaned = cleaned.replace('\n', ' ')
+        # cleaned = cleaned.replace('\n', ' ')
 
         # Remove remaining sequence of special chars
         cleaned = re.sub(r'[\^>]+', ' ', cleaned)

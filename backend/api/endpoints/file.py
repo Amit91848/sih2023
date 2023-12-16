@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from crud.crud_file import create_file, get_user_files, delete_user_file, get_user_file
 import tempfile
 from crud.crud_summary import get_latest_summary, get_all_summaries_by_file_id
+from crud.crud_grammar_check import get_grammar_check
 from collections import defaultdict
 
 from api.deps import CurrentUser, SessionDep, FileUploadServiceDep, EmbeddingDep, VectorStoreDep
@@ -112,6 +113,17 @@ async def get_file_summary(session: SessionDep, current_user: CurrentUser, file_
 
     summary = get_latest_summary(session, file_id)
     return success_response(data=summary)
+
+@router.get("/{file_id}/grammar-check")
+async def get_corrected_text(session: SessionDep, current_user: CurrentUser, file_id: int):
+    file = get_user_file(session, current_user.id, file_id)
+
+    if len(file) == 0:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,
+                            detail="Couldn't find the file you are looking for!")
+
+    db_grammar_check = get_grammar_check(session, file_id)
+    return success_response(data=db_grammar_check)
 
 @router.get("/{file_id}/summary/{type}")
 async def get_all_file_summaries(session: SessionDep, current_user: CurrentUser, file_id: int, type: int):

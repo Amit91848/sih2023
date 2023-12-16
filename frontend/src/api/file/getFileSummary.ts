@@ -21,7 +21,7 @@ export const getFileSummary = async ({
 }) => {
 	console.log(file_id, batchSize);
 	const res = await cAxios.get<ISummary>(
-		`${BACKEND_URL}/file/${file_id}/summary/${batchSize}`,
+		`${BACKEND_URL}/file/${file_id}/grammar-check`,
 		{
 			headers: {
 				Authorization: `Bearer ${HEADER_TOKEN}`,

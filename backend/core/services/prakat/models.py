@@ -1,17 +1,19 @@
-from prakat.batching import Batching
+from .batching import Batching
+from os import cpu_count
 from transformers import AutoModelForSeq2SeqLM
 from transformers import AutoTokenizer
-from ctranslate2 import Translator
+from ctranslate2 import Translator, Generator
+from core.types import BatchSize
 
 
+# FlanModel
+class PrakatSummarizerModel():
 
-class FlanModel():
-
-
-    def __init__(self, model_path: str, tokenizer_path: str=None) -> None:
+    def __init__(self, model_path: str,model_name: str, tokenizer_path: str=None) -> None:
         super().__init__()
 
         self.model_name = model_path
+        self.model_name = model_name
 
         if tokenizer_path==None:
             self.tokenizer_name = model_path
@@ -22,14 +24,14 @@ class FlanModel():
             self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
 
         except Exception as e:
-            raise ValueError("Input file path is not a valid transformer model or name of huggingface repo.")
+            raise ValueError(f"Input file path is not a valid transformer model or name of huggingface repo.\n{e}")
 
         
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
 
         except Exception as e:
-            raise ValueError("Unable to load tokenizer from input model path, or not a valid huggingface repo.")
+            raise ValueError(f"Unable to load tokenizer from input model path, or not a valid huggingface repo.\n{e}")
 
         self.batcher = Batching()
 
@@ -64,7 +66,14 @@ class FlanModel():
 
     def batch_summarize(self, text: str, batch_size: int) -> str:
         text = self.batcher.clean_text(text)
-        batches = self.batcher.get_batches(text=text, batch_size=batch_size)
+        size = 2048
+        if batch_size == BatchSize.LONG:
+            size = 512
+        elif batch_size == BatchSize.MEDIUM:
+            size = 1024
+        elif batch_size == BatchSize.SHORT:
+            size = 2048
+        batches = self.batcher.get_batches(text=text, batch_size=size)
         summaries = []
         for batch in batches:
             summary = self.summarize(batch)
@@ -100,20 +109,25 @@ class FlanModel():
 
         full_correction = ' '.join(checked)
         return full_correction
+    
+    def get_model_name(self):
+        return self.model_name
 
 
 
 
-class FlanT5_CT2():
+# FlanT5_CT2
+class PrakatGrammarCheckerModel():
 
-
-    def __init__(self, model_path: str, tokenizer_path: str) -> None:
+    def __init__(self, model_path: str, tokenizer_path: str, model_name: str) -> None:
         super().__init__()
 
         self.model_path = model_path
+        self.cpu_cores = cpu_count()
+        self.model_name = model_name
 
         try:
-            self.translator =  Translator(model_path)
+            self.translator =  Translator(model_path, device='cpu', inter_threads=self.cpu_cores)
         
         except Exception as e:
             raise ValueError(f"Could not load CT2 model from given filepath\n{e}")
@@ -123,7 +137,7 @@ class FlanT5_CT2():
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
         except Exception as e:
-            raise ValueError(f"Entered tokenizer_path is not a valid tokenizer model path or a valid huggingface repo.")
+            raise ValueError(f"Entered tokenizer_path is not a valid tokenizer model path or a valid huggingface repo.\n{e}")
         
         
         self.batcher = Batching()
@@ -220,3 +234,50 @@ class FlanT5_CT2():
 
         full_correction = ' '.join(checked)
         return full_correction
+    
+    def get_model_name(self):
+        return self.model_name
+    
+
+
+
+class Generator_CT2():
+
+
+    def __init__(self, model_path: str, tokenizer_path: str) -> None:
+        super().__init__()
+
+        self.model_path = model_path
+        self.cpu_cores = cpu_count()
+
+        try:
+            self.generator =  Generator(model_path, device='cpu', inter_threads=self.cpu_count)
+        
+        except Exception as e:
+            raise ValueError(f"Could not load CT2 model from given filepath\n{e}")
+        
+    
+        try: 
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+
+        except Exception as e:
+            raise ValueError(f"Entered tokenizer_path is not a valid tokenizer model path or a valid huggingface repo.\n{e}")
+        
+        
+        self.batcher = Batching()
+
+
+    def inference(self, query: str, sys_msg: str="", context: str="") -> str:
+        prompt = f"<SYS>{sys_msg}</SYS>\n<Context>{context}</Context>\nQ: {query}\nA: "
+
+        tokens = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode(prompt))
+
+        results = self.generator.generate_batch(
+            [tokens], 
+            beam_size = 4,
+            repetition_penalty = 1.5,
+            length_penalty = 1.5
+        )
+        
+        output = self.tokenizer.decode(results[0].sequences_ids[0])
+        return output

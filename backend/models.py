@@ -43,6 +43,22 @@ class Summary(SQLModel, table=True):
     user: "User" = Relationship(back_populates="summaries")
     file_id: int = Field(foreign_key="file.id")
     file: "File" = Relationship(back_populates="summaries")
+    
+class GrammarCheck(SQLModel, table=True):
+    id: int  = Field(default=None, primary_key=True, index=True, unique=True)
+    input_text: str = Field(Text)
+    corrected_text: str = Field(Text)
+    
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    
+    file_id: int = Field(foreign_key="file.id")
+    file: "File" = Relationship(back_populates="grammarCheck")
+    
+    user_id: int = Field(foreign_key="user.id")
+    user: "User" = Relationship(back_populates="grammarCheck")
+
+    status: Status = Field(sa_column=Column(ChoiceType(Status, impl=String()), nullable=False))
 
 class File(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True, index=True, unique=True)
@@ -59,7 +75,8 @@ class File(SQLModel, table=True):
 
     messages: List["Message"] = Relationship(back_populates="file", sa_relationship_kwargs={
                                              "cascade": "all, delete-orphan"}) 
-    summaries: List["Summary"] = Relationship(back_populates="file")   
+    summaries: List["Summary"] = Relationship(back_populates="file")
+    grammarCheck: "GrammarCheck" = Relationship(back_populates="file") 
 
 
 class User(UserBase, table=True):
@@ -69,6 +86,7 @@ class User(UserBase, table=True):
     files: List[File] = Relationship(back_populates="user")
     messages: List["Message"] = Relationship(back_populates="user")
     summaries: List["Summary"] = Relationship(back_populates="user")
+    grammarCheck: "GrammarCheck" = Relationship(back_populates="user")
 
 
 class UserCreate(UserBase):

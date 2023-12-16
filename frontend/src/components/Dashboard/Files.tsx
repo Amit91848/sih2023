@@ -1,12 +1,12 @@
 import { deleteUserFile } from "@/api/file/deleteUserFile";
 import { getUserFiles } from "@/api/file/getUserFiles";
-import { summarizeFile, BatchSize } from "@/api/file/summarizeFile";
+import { summarizeFile, BatchSize, grammarCheckFile } from "@/api/file/summarizeFile";
 import { IFile, Status } from "@/types";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { MessageSquareMore, MoreVertical, SpellCheck, Trash } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import { EmptyScreen } from "../EmptyScreen";
-import React, { useState } from "react";
+import React from "react";
 import { filesize } from "filesize";
 import {
 	DropdownMenu,
@@ -20,19 +20,20 @@ import {
 } from "../ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Link } from "@/lib/navigation";
-import { Dialog, DialogTrigger } from "../ui/dialog";
-import { DialogContent } from "@radix-ui/react-dialog";
-import { Button, buttonVariants } from "../ui/button";
+import { DialogTrigger } from "../ui/dialog";
 import { format } from "date-fns";
 
 interface IFilesProps {
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
 	setDialogContent: React.Dispatch<React.SetStateAction<string | null>>;
+	setGrammarCheckFileId: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
-export const Files = ({ setSummaryFileId, setDialogContent }: IFilesProps) => {
-	const [isOpen, setIsOpen] = useState(false);
-
+export const Files = ({
+	setSummaryFileId,
+	setDialogContent,
+	setGrammarCheckFileId,
+}: IFilesProps) => {
 	const { data: files, isLoading } = useQuery({
 		queryKey: ["files"],
 		queryFn: getUserFiles,
@@ -52,6 +53,7 @@ export const Files = ({ setSummaryFileId, setDialogContent }: IFilesProps) => {
 							<File
 								setSummaryFileId={setSummaryFileId}
 								setDialogContent={setDialogContent}
+								setGrammarCheckFileId={setGrammarCheckFileId}
 								file={file}
 								key={file.id}
 							/>
@@ -70,9 +72,15 @@ interface FileProps {
 	file: IFile;
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
 	setDialogContent: React.Dispatch<React.SetStateAction<string | null>>;
+	setGrammarCheckFileId: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
-const File = ({ file, setSummaryFileId, setDialogContent }: FileProps) => {
+const File = ({
+	file,
+	setSummaryFileId,
+	setDialogContent,
+	setGrammarCheckFileId,
+}: FileProps) => {
 	const queryClient = useQueryClient();
 	const { mutate: deleteFile } = useMutation({
 		mutationFn: deleteUserFile,
@@ -88,16 +96,15 @@ const File = ({ file, setSummaryFileId, setDialogContent }: FileProps) => {
 		},
 	});
 
+	const { mutate: grammarCheck, isLoading } = useMutation({
+		mutationFn: grammarCheckFile,
+		onSuccess() {
+			queryClient.invalidateQueries(["files"]);
+		},
+	});
+
 	return (
 		<>
-			{/* <Dialog
-				open={isDialogOpen}
-				onOpenChange={(v) => {
-					if (!v) {
-						setIsDialogOpen(v);
-					}
-				}}
-			> */}
 			<li
 				key={file.id}
 				className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow transition hover:shadow-lg"
@@ -198,6 +205,15 @@ const File = ({ file, setSummaryFileId, setDialogContent }: FileProps) => {
 												</DialogTrigger>
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												// disabled={isLoading}
+												className={"cursor-pointer"}
+												onClick={() => {
+													grammarCheck({ fileId: file.id });
+												}}
+											>
+												Grammar Check
+											</DropdownMenuItem>
 											<DropdownMenuItem className="cursor-pointer">
 												<SpellCheck className="mr-2 h-4 w-4" />
 
@@ -206,9 +222,11 @@ const File = ({ file, setSummaryFileId, setDialogContent }: FileProps) => {
 														// setSummaryFileId(file.id);
 														// console.log(file.id);
 														setDialogContent("grammar-check");
+														setGrammarCheckFileId(file.id);
+														// grammarCheck({file_id: file.id})
 													}}
 												>
-													Grammar Check
+													View Grammar Check
 												</DialogTrigger>
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />

@@ -1,4 +1,4 @@
-from prakat.models import FlanModel, FlanT5_CT2
+from .models import FlanModel, FlanT5_CT2
 import os
 import gc
 import psutil
@@ -8,7 +8,6 @@ import psutil
 class Loader():
 
     def __init__(self):
-        self.cpu_cores = os.cpu_count()
 
         self.models = {}
         

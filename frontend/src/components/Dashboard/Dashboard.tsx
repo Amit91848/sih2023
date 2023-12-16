@@ -26,16 +26,17 @@ import { getFileSummary } from "@/api/file/getFileSummary";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import { getFile } from "@/api/file/getFile";
 import { msToTime } from "@/lib/utils";
+import { getGrammarCheck } from "@/api/file/getGrammarCheck";
 
-enum DiffMethod {
-	CHARS = "diffChars",
-	WORDS = "diffWords",
-	WORDS_WITH_SPACE = "diffWordsWithSpace",
-	LINES = "diffLines",
-	TRIMMED_LINES = "diffTrimmedLines",
-	SENTENCES = "diffSentences",
-	CSS = "diffCss",
-}
+// enum DiffMethod {
+// 	CHARS = "diffChars",
+// 	WORDS = "diffWords",
+// 	WORDS_WITH_SPACE = "diffWordsWithSpace",
+// 	LINES = "diffLines",
+// 	TRIMMED_LINES = "diffTrimmedLines",
+// 	SENTENCES = "diffSentences",
+// 	CSS = "diffCss",
+// }
 
 const Dashboard = () => {
 	const columns = [
@@ -97,27 +98,8 @@ const Dashboard = () => {
 	});
 
 	const [summaryFileId, setSummaryFileId] = useState<number | null>(null);
+	const [grammarCheckFileId, setGrammarCheckFileId] = useState<number | null>(null);
 	const [dialogContent, setDialogContent] = useState<string | null>(null);
-
-	const oldCode = `
-	const a = 10
-	const b = 10
-	const c = () => console.log('foo')
-	
-	if(a > 10) {
-		console.log('bar')
-	}
-	
-	console.log('done')
-	`;
-	const newCode = `
-	const a = 10
-	const boo = 10
-	
-	if(a === 10) {
-		console.log('bar')
-	}
-	`;
 
 	return (
 		<main className="mx-auto max-w-7xl md:p-10">
@@ -138,6 +120,7 @@ const Dashboard = () => {
 							<Files
 								setSummaryFileId={setSummaryFileId}
 								setDialogContent={setDialogContent}
+								setGrammarCheckFileId={setGrammarCheckFileId}
 							/>
 							<DialogContent className="p-8 max-w-7xl w-full min-h-[calc(100vh-15rem)]">
 								{dialogContent === "summary" ? (
@@ -171,13 +154,7 @@ const Dashboard = () => {
 								) : (
 									// <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
 									<div className="overflow-scroll max-h-[calc(100vh-10rem)]">
-										<ReactDiffViewer
-											oldValue={oldCode}
-											newValue={newCode}
-											splitView={true}
-											leftTitle={`Input Text`}
-											rightTitle={`Grammar Checked`}
-										/>
+										<GrammarCheckViewer fileId={grammarCheckFileId} />
 									</div>
 									// </SimpleBar>
 								)}
@@ -233,6 +210,82 @@ const Summary = ({ batchSize, fileId }: SummaryProps) => {
 				{batchSize} {fileId}
 			</div>
 		</div>
+	);
+};
+
+const GrammarCheckViewer = ({ fileId }: { fileId: number | null }) => {
+	const { data } = useQuery({
+		queryFn: () => getGrammarCheck({ fileId }),
+		queryKey: ["file_id", fileId, "grammar_check"],
+	});
+
+	const defaultStyles = {
+		variables: {
+			light: {
+				diffViewerBackground: "#fff",
+				diffViewerColor: "#212529",
+				addedBackground: "#fff",
+				addedColor: "#24292e",
+				removedBackground: "#fff",
+				removedColor: "#24292e",
+				wordAddedBackground: "#acf2bd",
+				wordRemovedBackground: "#fdb8c0",
+				addedGutterBackground: "#fff",
+				removedGutterBackground: "#fff",
+				gutterBackground: "#f7f7f7",
+				gutterBackgroundDark: "#f3f1f1",
+				highlightBackground: "#fffbdd",
+				highlightGutterBackground: "#fff5b1",
+				codeFoldGutterBackground: "#dbedff",
+				codeFoldBackground: "#f1f8ff",
+				emptyLineBackground: "#fafbfc",
+				gutterColor: "#212529",
+				addedGutterColor: "#212529",
+				removedGutterColor: "#212529",
+				codeFoldContentColor: "#212529",
+				diffViewerTitleBackground: "#fafbfc",
+				diffViewerTitleColor: "#212529",
+				diffViewerTitleBorderColor: "#eee",
+			},
+			dark: {
+				diffViewerBackground: "#2e303c",
+				diffViewerColor: "#FFF",
+				addedBackground: "#044B53",
+				addedColor: "white",
+				removedBackground: "#632F34",
+				removedColor: "white",
+				wordAddedBackground: "#055d67",
+				wordRemovedBackground: "#7d383f",
+				addedGutterBackground: "#034148",
+				removedGutterBackground: "#632b30",
+				gutterBackground: "#2c2f3a",
+				gutterBackgroundDark: "#262933",
+				highlightBackground: "#2a3967",
+				highlightGutterBackground: "#2d4077",
+				codeFoldGutterBackground: "#21232b",
+				codeFoldBackground: "#262831",
+				emptyLineBackground: "#363946",
+				gutterColor: "#464c67",
+				addedGutterColor: "#8c8c8c",
+				removedGutterColor: "#8c8c8c",
+				codeFoldContentColor: "#555a7b",
+				diffViewerTitleBackground: "#2f323e",
+				diffViewerTitleColor: "#555a7b",
+				diffViewerTitleBorderColor: "#353846",
+			},
+		},
+		contentText: { "font-size": "15px" },
+	};
+
+	return (
+		<ReactDiffViewer
+			oldValue={data?.data?.input_text}
+			newValue={data?.data?.corrected_text}
+			splitView={true}
+			leftTitle={`Input Text`}
+			rightTitle={`Grammar Checked`}
+			styles={defaultStyles}
+		/>
 	);
 };
 

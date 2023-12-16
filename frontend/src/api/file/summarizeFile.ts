@@ -24,3 +24,17 @@ export const summarizeFile = async ({ fileId, batchSize }: ISummarizeFileProps) 
 
 	return res;
 };
+
+export const grammarCheckFile = async ({ fileId }: { fileId: number }) => {
+	const res = await cAxios.post(
+		`${BACKEND_URL}/llm/grammar-check`,
+		{ fileId },
+		{
+			headers: {
+				Authorization: `Bearer ${HEADER_TOKEN}`,
+			},
+		},
+	);
+
+	return res;
+};
