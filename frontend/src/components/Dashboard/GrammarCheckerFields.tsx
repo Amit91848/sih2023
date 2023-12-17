@@ -1,10 +1,11 @@
 import { useState } from "react";
 import ReactDiffViewer from "react-diff-viewer-continued";
-import { Button } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { useMutation } from "@tanstack/react-query";
 import { grammarCheckText } from "@/api/file/grammarCheckText";
-import { Loader2 } from "lucide-react";
+import { Clipboard, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export const GrammarCheckFields = () => {
 	const [inputText, setInputText] = useState("");
@@ -81,7 +82,7 @@ export const GrammarCheckFields = () => {
 				{/* Left side: Input Text Area */}
 				<div className="w-1/2 p-4 flex flex-col">
 					<div>
-						<div className="flex items-center justify-between">
+						<div className="flex items-center justify-between mb-4">
 							<label
 								htmlFor="inputTextArea"
 								className="text-lg font-semibold mb-2 block"
@@ -117,20 +118,40 @@ export const GrammarCheckFields = () => {
 				</div>
 				{/* Right side: Summarized Text Area */}
 				<div className="w-1/2 p-4">
-					<label
-						htmlFor="summarizedTextArea"
-						className="text-lg font-semibold mb-2 block"
-					>
-						Grammar Check
-					</label>
-					<Textarea
-						id="summarizedTextArea"
-						className="w-full p-2"
-						placeholder="Corrected Text will appear here...."
-						rows={10}
-						cols={10}
-						readOnly
-					/>
+					<div>
+						<div className="flex justify-between mb-3 items-center">
+							<label
+								htmlFor="summarizedTextArea"
+								className="text-lg font-semibold mb-2 block"
+							>
+								Corrected Text
+							</label>
+							<Button
+								onClick={() => {
+									toast.success("Copied corrected text to clipboard!");
+									navigator.clipboard.writeText(data?.data?.corrected_text || "");
+								}}
+							>
+								<Clipboard width={14} height={14} />
+							</Button>
+						</div>
+						<Textarea
+							id="summarizedTextArea"
+							className="w-full p-2"
+							placeholder="Corrected Text will appear here...."
+							rows={10}
+							cols={10}
+							readOnly
+							value={data?.data?.corrected_text ? data.data.corrected_text : ""}
+						/>
+					</div>
+					<div className="mt-4 flex">
+						{data?.data?.time_taken && (
+							<div className="text-sm self-end">
+								Time taken: {data.data.time_taken} seconds
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 			{isSuccess && (

@@ -33,7 +33,7 @@ const Navbar = () => {
 							<Button variant="ghost" className="w-full ">
 								{compute?.data?.model_name
 									? compute.data.model_name
-									: "Select a Model to load"}
+									: "No model loaded"}
 								<ChevronDown width={2} height={2} />
 							</Button>
 						</div>

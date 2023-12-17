@@ -28,15 +28,16 @@ router = APIRouter()
 def call_batch_summarize(request: Request, session: SessionDep, txt_content: str, summary_id: int, batch_size: BatchSize):
   llm = create_summarizer_model_service()
   request.app.state.current_model = llm
-  full_summary = llm.batch_summarize(text=txt_content[:2000], batch_size=batch_size)
+  full_summary = llm.batch_summarize(text=txt_content, batch_size=batch_size)
   update_summary(db=session, summary_id=summary_id, status=Status.SUCCESS, summary=full_summary)
   request.app.state.current_model = None
+  print(full_summary)
   return full_summary
 
 def call_grammar_check(request: Request, session: SessionDep, txt_content: str, grammar_check_id: int):
   llm = create_grammar_check_model_service()
   request.app.state.current_model = llm
-  corrected_text = llm.grammar_check(text=txt_content[:2000])
+  corrected_text = llm.grammar_check(text=txt_content)
   update_grammar_check(db=session, grammar_check_id=grammar_check_id, status=Status.SUCCESS, corrected_text=corrected_text)
   request.app.state.current_model = None
   return corrected_text

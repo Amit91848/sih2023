@@ -182,6 +182,7 @@ class FlanT5_CT2():
             size = 2048
         text = self.batcher.clean_text(text)
         batches = self.batcher.get_batches(text=text, batch_size=size)
+        print(batches)
         summaries = []
         for batch in batches:
             summary = self.summarize(batch)

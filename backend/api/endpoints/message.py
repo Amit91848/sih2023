@@ -7,6 +7,10 @@ from pydantic import BaseModel
 from crud.crud_message import get_all_messages, find_prev_messages, format_message, create_message
 from crud.crud_file import get_user_file
 from core.utils import success_response
+from langchain.callbacks import AsyncIteratorCallbackHandler
+from typing import AsyncIterable
+import asyncio
+from core.services.prakat.llama import LocalModel
 from openai import OpenAI
 from core.settings import settings
 from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
@@ -22,6 +26,22 @@ class MessageBody(BaseModel):
     message: str
     fileId: int
 
+async def send_message(content: str, model: LocalModel) -> AsyncIterable[str]:
+    callback = AsyncIteratorCallbackHandler()
+  
+    task = asyncio.create_task(
+        model.stream_inference(content)
+    )
+
+    try:
+        async for token in callback.aiter():
+            yield token
+    except Exception as e:
+        print(f"Caught exception: {e}")
+    finally:
+        callback.done.set()
+
+    await task
 
 @router.post("/")
 async def post_message(request: Request,vector_store: VectorStoreDep, embeddings: EmbeddingDep, session: SessionDep, current_user: CurrentUser):
@@ -51,16 +71,17 @@ async def post_message(request: Request,vector_store: VectorStoreDep, embeddings
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
     rag_ai = create_rag_model_service()
-    request.app.state.current_model = rag_ai
-    def stream():
-        acc_response = ""
-        ai_response = rag_ai.stream_inference(query=originalMsg)
-        for token in ai_response:
-            acc_response += token
-            yield token
-        ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
-        request.app.state.current_model = None
-    return StreamingResponse(content=stream(), media_type='text/event-stream')
+    # request.app.state.current_model = rag_ai
+    # def stream():
+    #     acc_response = ""
+    #     ai_response = rag_ai.stream_inference(query=originalMsg)
+    #     for token in ai_response:
+    #         acc_response += token
+    #         yield token
+    #     ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
+    #     request.app.state.current_model = None
+    generator = send_message(originalMsg, model=rag_ai)
+    return StreamingResponse(content=generator, media_type='text/event-stream')
 
 
 @router.get("/all")

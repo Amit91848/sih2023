@@ -247,7 +247,9 @@ const File = ({
 
 				<div className="px-6 mt-4 grid grid-cols-2 place-items-center py-2 gap-2">
 					<div className="w-36">{filesize(file.size, { standard: "jedec" })}</div>
-					<div className="w-36">{format(new Date(file.created_at), "MMM yyyy")}</div>
+					<div className="w-44">
+						{format(new Date(file.created_at), "h:mm do MMM yyyy")}
+					</div>
 					{/* <Button variant="ghost" className="w-full">
 						View Summaries
 					</Button>

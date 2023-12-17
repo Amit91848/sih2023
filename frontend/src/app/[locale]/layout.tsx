@@ -5,13 +5,13 @@ import { notFound } from "next/navigation";
 import { unstable_setRequestLocale } from "next-intl/server";
 import "simplebar-react/dist/simplebar.min.css";
 import React from "react";
+import { Toaster } from "react-hot-toast";
 
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
-import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NextIntlClientProvider } from "next-intl";

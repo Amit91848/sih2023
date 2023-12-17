@@ -156,7 +156,7 @@ const Dashboard = () => {
 									</Tabs>
 								) : (
 									// <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
-									<div className="overflow-scroll max-h-[calc(100vh-10rem)]">
+									<div className="max-h[calc(100vh-10rem)]">
 										<GrammarCheckViewer fileId={grammarCheckFileId} />
 									</div>
 									// </SimpleBar>
@@ -285,14 +285,22 @@ const GrammarCheckViewer = ({ fileId }: { fileId: number | null }) => {
 	};
 
 	return (
-		<ReactDiffViewer
-			oldValue={data?.data?.input_text}
-			newValue={data?.data?.corrected_text}
-			splitView={true}
-			leftTitle={`Input Text`}
-			rightTitle={`Grammar Checked`}
-			styles={defaultStyles}
-		/>
+		<>
+			{data?.data ? (
+				<ReactDiffViewer
+					oldValue={data?.data?.input_text}
+					newValue={data?.data?.corrected_text}
+					splitView={true}
+					leftTitle={`Input Text`}
+					rightTitle={`Grammar Checked`}
+					styles={defaultStyles}
+				/>
+			) : (
+				<div className="flex items-center justify-center w-full h-full">
+					<EmptyScreen text="No grammar checks for this document found!!" />
+				</div>
+			)}
+		</>
 	);
 };
 

@@ -4,7 +4,8 @@ import { Button } from "../ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { summarizeText } from "@/api/file/summarizeText";
-import { Loader2 } from "lucide-react";
+import { Clipboard, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const SummaryFields = () => {
 	const [inputText, setInputText] = useState<string>("");
@@ -24,7 +25,7 @@ const SummaryFields = () => {
 			{/* Left side: Input Text Area */}
 			<div className="w-1/2 p-4 flex flex-col">
 				<div>
-					<div className="flex items-center justify-between">
+					<div className="flex items-center justify-between mb-4">
 						<label htmlFor="inputTextArea" className="text-lg font-semibold mb-2 block">
 							Input Text
 						</label>
@@ -44,7 +45,7 @@ const SummaryFields = () => {
 					</div>
 					<Textarea
 						id="inputTextArea"
-						className="w-full p-2 text-green-400"
+						className="w-full p-2 "
 						placeholder="Enter up to 600 words of text..."
 						rows={17}
 						cols={17}
@@ -68,21 +69,40 @@ const SummaryFields = () => {
 			</div>
 			{/* Right side: Summarized Text Area */}
 			<div className="w-1/2 p-4">
-				<label
-					htmlFor="summarizedTextArea"
-					className="text-lg font-semibold mb-2 block"
-				>
-					Summarized Text
-				</label>
-				<Textarea
-					id="summarizedTextArea"
-					className="w-full p-2"
-					placeholder="Summarized text will appear here..."
-					rows={17}
-					cols={17}
-					value={data?.data?.summary ? data.data.summary : ""}
-					readOnly
-				/>
+				<div className="flex justify-between items-center mb-3">
+					<label
+						htmlFor="summarizedTextArea"
+						className="text-lg font-semibold mb-2 block"
+					>
+						Summarized Text
+					</label>
+					<Button
+						onClick={() => {
+							toast.success("Copied corrected text to clipboard!");
+							navigator.clipboard.writeText(data?.data?.corrected_text || "");
+						}}
+					>
+						<Clipboard width={14} height={14} />
+					</Button>
+				</div>
+				<div>
+					<Textarea
+						id="summarizedTextArea"
+						className="w-full p-2"
+						placeholder="Summarized text will appear here..."
+						rows={17}
+						cols={17}
+						value={data?.data?.summary ? data.data.summary : ""}
+						readOnly
+					/>
+					<div className="mt-4 flex">
+						{data?.data?.time_taken && (
+							<div className="text-sm self-end">
+								Time taken: {data.data.time_taken} seconds
+							</div>
+						)}
+					</div>
+				</div>
 			</div>
 		</div>
 	);
