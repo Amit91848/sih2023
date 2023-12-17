@@ -1,15 +1,16 @@
 from api.deps import CurrentUser, SessionDep
 from typing import Optional
 
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from crud.crud_message import get_all_messages, find_prev_messages, format_message, create_message
 from crud.crud_file import get_user_file
 from core.utils import success_response
 from openai import OpenAI
 from core.settings import settings
-from langchain.vectorstores.pinecone import Pinecone
 from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
+from sse_starlette.sse import EventSourceResponse
 
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -24,26 +25,30 @@ class MessageBody(BaseModel):
 
 
 @router.post("/")
-async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, session: SessionDep, current_user: CurrentUser, body: MessageBody):
-    file = get_user_file(session, current_user.id, body.fileId)
+async def post_message(request: Request,vector_store: VectorStoreDep, embeddings: EmbeddingDep, session: SessionDep, current_user: CurrentUser):
+    data = await request.json()
+    fileId = data["fileId"]
+    originalMsg = data["message"]
+    print(fileId, originalMsg)
+    file = get_user_file(session, current_user.id, fileId)
 
     if not file:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File could not be found")
 
-    message = create_message(session, body.fileId,
-                             current_user.id, body.message)
+    message = create_message(session, fileId,
+                             current_user.id, originalMsg)
 
     if not message:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Error storing message")
 
-    results = vector_store.similarity_search(body.message, 2, {"file_id": file[0].id})
+    results = vector_store.similarity_search(originalMsg, 2, {"file_id": file[0].id})
     print(results)
     context_text = "\n\n".join([result for result in results])
 
     prev_messages = find_prev_messages(
-        session, body.fileId, current_user.id, 6)
+        session, fileId, current_user.id, 6)
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
     message_prompt = """
@@ -73,17 +78,18 @@ async def post_message(vector_store: VectorStoreDep, embeddings: EmbeddingDep, s
     #          }
     #     ]
     # )
-    SYS_PROMPT = """You are an intelligent assistant named PrakatBot, developed by Prakat Systems. Your directive and goal is to produce valid and good answers to user questions. If context is provided answer the user question from the context provided. DO NOT give any wrong answers. If you don't know the answer, just say that you don't know, don't try to make up an answer. Be honest and helpful.
-    """
+    # SYS_PROMPT = """You are an intelligent assistant named PrakatBot, developed by Prakat Systems. Your directive and goal is to produce valid and good answers to user questions. If context is provided answer the user question from the context provided. DO NOT give any wrong answers. If you don't know the answer, just say that you don't know, don't try to make up an answer. Be honest and helpful.
+    # """
     rag_ai = create_rag_model_service()
-    ai_response = rag_ai.inference(query=body.message ,sys_msg=SYS_PROMPT, context=results)
+    # ai_response = rag_ai.stream_inference(query=originalMsg)
 
 
-    ai_message = create_message(
-        session, body.fileId, current_user.id, ai_response, False)
+    # ai_message = create_message(
+        # session, body.fileId, current_user.id, ai_response, False)
 
-    print(f"Ai-response: {ai_response}")
-    return ai_response
+    # for token in ai_response:
+        # print(f"Ai-response: {token}")
+    return StreamingResponse(content=rag_ai.stream_inference(query=originalMsg), media_type='text/event-stream')
 
 
 @router.get("/all")

@@ -6,9 +6,14 @@ from crud.crud_summary import create_summary, update_summary
 from crud.crud_grammar_check import create_grammar_check, update_grammar_check
 from langchain.document_loaders.pdf import PyMuPDFLoader
 from core.types import BatchSize,Status
+from datetime import datetime
 
 class SummarizeBody(BaseModel):
   fileId: int
+  batchSize: BatchSize
+  
+class SummarizeText(BaseModel):
+  text: str
   batchSize: BatchSize
 
 class GrammarBody(BaseModel):
@@ -51,9 +56,23 @@ async def grammar_check(request: Request, currentUser: CurrentUser, session: Ses
     bg_tasks.add_task(call_grammar_check, request=request, session=session, grammar_check_id=db_grammar_check.id, txt_content=txt_content)
 
     return {"text_content": txt_content}
+  
+@router.post("/summarizeText")
+async def summarize_text(request: Request, currentUser: CurrentUser, body: SummarizeText):
+  start_time = datetime.now()
+  
+  llm = create_summarizer_model_service()
+  request.app.state.current_model = llm
+  full_summary = llm.batch_summarize(text=body.text, batch_size=body.batchSize)
+  request.app.state.current_model = None
+  
+  end_time = datetime.now()
+  elapsed_time = end_time - start_time
+  
+  return {"summary": full_summary, "time_taken": elapsed_time}
 
 @router.post("/summarize")
-async def summarize_text(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):
+async def summarize_doc(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):
   # try:
     file = get_user_file(db=session, user_id=currentUser.id, file_id=body.fileId)
 

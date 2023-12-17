@@ -14,7 +14,6 @@ import {
 	VTabsTrigger,
 } from "../ui/tabs";
 import { Files } from "./Files";
-import { DataTable } from "../ui/data-table/data-table";
 import { useDataTable } from "@/hooks/use-data-table";
 import { Checkbox } from "../ui/checkbox";
 import { DataTableFilterableColumn, DataTableSearchableColumn } from "@/types";
@@ -27,6 +26,7 @@ import ReactDiffViewer from "react-diff-viewer-continued";
 import { getFile } from "@/api/file/getFile";
 import { msToTime } from "@/lib/utils";
 import { getGrammarCheck } from "@/api/file/getGrammarCheck";
+import SummaryFields from "./SummaryFields";
 
 // enum DiffMethod {
 // 	CHARS = "diffChars",
@@ -108,7 +108,7 @@ const Dashboard = () => {
 			</Header>
 
 			{/* display all user files */}
-			<div className="flex mt-4 justify-center">
+			<div className="mt-4 justify-center">
 				<Tabs defaultValue="files">
 					<TabsList className="flex bg-transparent w-full justify-center">
 						<TabsTrigger value="files">Files</TabsTrigger>
@@ -162,11 +162,7 @@ const Dashboard = () => {
 						</Dialog>
 					</TabsContent>
 					<TabsContent value="summaries">
-						<DataTable
-							columns={columns}
-							dataTable={dataTable}
-							deleteRowsAction={(e) => console.log(e)}
-						/>
+						<SummaryFields />
 					</TabsContent>
 				</Tabs>
 			</div>
