@@ -1,7 +1,7 @@
 from api.deps import CurrentUser, SessionDep
 from typing import Optional
 
-from fastapi import APIRouter, status, HTTPException, Request
+from fastapi import APIRouter, status, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from crud.crud_message import get_all_messages, find_prev_messages, format_message, create_message
@@ -50,45 +50,17 @@ async def post_message(request: Request,vector_store: VectorStoreDep, embeddings
         session, fileId, current_user.id, 6)
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
-    message_prompt = """
-                Use the following pieces of context (Extracted from user uploaded document) (or previous conversaton if needed) to answer the users question in markdown format. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer. If question does not exist in context do not answer
-
-                \n----------------\n
-                    PREVIOUS CONVERSATION:
-
-                    {}
-                \n----------------\n
-
-                  CONTEXT:
-                  {}
-
-                  USER INPUT: {}
-             """
-
-    # ai_response = openai_client.chat.completions.create(
-    #     model="gpt-3.5-turbo",
-    #     temperature=0,
-    #     stream=True,
-    #     messages=[
-    #         {"role": "system",
-    #             "content": "Use the following pieces of context (or previous conversaton if needed) to answer the users question in markdown format."},
-    #         {"role": "user", "content": message_prompt.format(formatted_prev_messages, context_text, body.message)
-
-    #          }
-    #     ]
-    # )
-    # SYS_PROMPT = """You are an intelligent assistant named PrakatBot, developed by Prakat Systems. Your directive and goal is to produce valid and good answers to user questions. If context is provided answer the user question from the context provided. DO NOT give any wrong answers. If you don't know the answer, just say that you don't know, don't try to make up an answer. Be honest and helpful.
-    # """
     rag_ai = create_rag_model_service()
-    # ai_response = rag_ai.stream_inference(query=originalMsg)
-
-
-    # ai_message = create_message(
-        # session, body.fileId, current_user.id, ai_response, False)
-
-    # for token in ai_response:
-        # print(f"Ai-response: {token}")
-    return StreamingResponse(content=rag_ai.stream_inference(query=originalMsg), media_type='text/event-stream')
+    request.app.state.current_model = rag_ai
+    def stream():
+        acc_response = ""
+        ai_response = rag_ai.stream_inference(query=originalMsg)
+        for token in ai_response:
+            acc_response += token
+            yield token
+        ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
+        request.app.state.current_model = None
+    return StreamingResponse(content=stream(), media_type='text/event-stream')
 
 
 @router.get("/all")

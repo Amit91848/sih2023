@@ -5,7 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { summarizeText } from "@/api/file/summarizeText";
 import { Loader2 } from "lucide-react";
-import { useToast } from "../ui/use-toast";
 
 const SummaryFields = () => {
 	const [inputText, setInputText] = useState<string>("");

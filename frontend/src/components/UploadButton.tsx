@@ -38,6 +38,8 @@ const UploadDropzone = ({ closeModal }: UploadDropzoneProps) => {
 				variant: "default",
 				description: `${data.data?.name} Uploaded Successfully 🎉🎉`,
 			});
+			setUploadProgress(100);
+			closeModal();
 		},
 		onError: (err) => {
 			toast({
@@ -57,8 +59,6 @@ const UploadDropzone = ({ closeModal }: UploadDropzoneProps) => {
 			uploadFile(acceptedFiles[0]);
 
 			clearInterval(progressInterval);
-			setUploadProgress(100);
-			closeModal();
 		},
 	});
 
@@ -122,10 +122,10 @@ const UploadDropzone = ({ closeModal }: UploadDropzoneProps) => {
 								value={uploadProgress}
 								className="h-1 w-full bg-zinc-200"
 							/>
-							{uploadProgress === 100 ? (
+							{uploadProgress !== 100 ? (
 								<div className="flex gap-1 items-center justify-center text-sm text-zinc-700 text-center pt-2">
 									<Loader2 className="h-3 w-3 animate-spin" />
-									Redirecting...
+									Processing Your Doc...
 								</div>
 							) : null}
 						</div>

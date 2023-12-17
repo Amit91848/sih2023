@@ -1,7 +1,7 @@
 import React, { ReactNode, createContext, useRef, useState } from "react";
 // import { useToast } from "../ui/use-toast";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendMessage } from "@/api/message/sendMessage";
+import { sendMessageText } from "@/api/message/sendMessage";
 import { GetFileMessagesAll } from "@/api/message/getFileMessage";
 import { APIResponse } from "@/lib/utils";
 import { IMessage } from "@/types/message";
@@ -38,8 +38,8 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
 
 	const backupMessage = useRef("");
 
-	const { mutate: sendMessageMutation } = useMutation({
-		mutationFn: sendMessage,
+	const { mutate: sendMessage } = useMutation({
+		mutationFn: sendMessageText,
 		onMutate: async ({ message }) => {
 			backupMessage.current = message;
 			setMessage("");
@@ -89,97 +89,74 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
 			};
 		},
 		onSettled: () => {
+			console.log(queryClient.getQueryData(["file_id", fileId, "messages"]));
 			queryClient.invalidateQueries(["file_id", fileId, "messages"]);
+			setIsLoading(false);
 		},
 		onSuccess: async (res) => {
-			setIsLoading(false);
-
 			const reader = res?.getReader();
 			const decoder = new TextDecoder();
 			let done = false;
 
 			// accumulated response
-			let accResponse = "";
 
 			while (!done) {
 				const { value, done: doneReading } = await reader.read();
 				done = doneReading;
 				const chunkValue = decoder.decode(value);
-				console.log(chunkValue);
-				accResponse += chunkValue;
-				console.log(accResponse);
+
+				queryClient.setQueryData<
+					InfiniteData<APIResponse<GetFileMessagesAll>> | undefined
+				>(["file_id", fileId, "messages"], (old) => {
+					if (!old) return { pages: [], pageParams: [] };
+
+					let isAiResponseCreated = old.pages.some(
+						(page) =>
+							// page.messages.some((message) => message.id === "ai-response")
+							page.data?.messages.some((message) => message.id === 0),
+					);
+
+					let updatedPages = old.pages.map((page) => {
+						if (page === old.pages[0]) {
+							let updatedMessages;
+
+							if (!isAiResponseCreated) {
+								updatedMessages = [
+									{
+										createdAt: new Date().toISOString(),
+										id: 0,
+										text: chunkValue,
+										isUserMessage: false,
+									},
+									...page.data?.messages,
+								];
+								// console.log("if condition: ");
+								// console.log(updatedMessages);
+							} else {
+								updatedMessages = page.data?.messages.map((message) => {
+									if (message.id === 0) {
+										return {
+											...message,
+											text: message.text + chunkValue,
+										};
+									}
+									return message;
+								});
+								console.log("else condition: ");
+							}
+							if (page.data) {
+								page.data.messages = updatedMessages;
+							}
+							console.log(page);
+							return { ...page };
+						}
+						return page;
+					});
+
+					return { ...old, pages: updatedPages };
+				});
 			}
-
-			// // accumulated response
-			// let accResponse = "";
-
-			// stream.data?.stream.addEventListener("message", (event) => {
-			// 	// Process the incoming message and accumulate the response
-			// 	const message = JSON.parse(event.data);
-			// 	accResponse += message + "\n";
-			// 	console.log(accResponse);
-			// });
 		},
-
-		// while (!done) {
-		// 	const { value, done: doneReading } = await reader.read();
-		// 	done = doneReading;
-		// 	const chunkValue = decoder.decode(value);
-
-		// 	accResponse += chunkValue;
-		// 	console.log(accResponse);
-
-		// append chunk to the actual message
-		// utils.getFileMessages.setInfiniteData(
-		//   { fileId, limit: INFINITE_QUERY_LIMIT },
-		//   (old) => {
-		//     if (!old) return { pages: [], pageParams: [] };
-
-		//     let isAiResponseCreated = old.pages.some((page) =>
-		//       page.messages.some((message) => message.id === "ai-response")
-		//     );
-
-		//     let updatedPages = old.pages.map((page) => {
-		//       if (page === old.pages[0]) {
-		//         let updatedMessages;
-
-		//         if (!isAiResponseCreated) {
-		//           updatedMessages = [
-		//             {
-		//               createdAt: new Date().toISOString(),
-		//               id: "ai-response",
-		//               text: accResponse,
-		//               isUserMessage: false,
-		//             },
-		//             ...page.messages,
-		//           ];
-		//         } else {
-		//           updatedMessages = page.messages.map((message) => {
-		//             if (message.id === "ai-response") {
-		//               return {
-		//                 ...message,
-		//                 text: accResponse,
-		//               };
-		//             }
-		//             return message;
-		//           });
-		//         }
-
-		//         return {
-		//           ...page,
-		//           messages: updatedMessages,
-		//         };
-		//       }
-
-		//       return page;
-		//     });
-
-		//     return { ...old, pages: updatedPages };
-		//   }
-		// );
-		// }
-		// },
-		// });
 	});
 	//   onError: (_, __, context) => {
 	//     setMessage(backupMessage.current);
@@ -188,18 +165,12 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
 	//       { messages: context?.previousMessages ?? [] }
 	//     );
 	//   },
-	//   onSettled: async () => {
-	//     setIsLoading(false);
-
-	//     await utils.getFileMessages.invalidate({ fileId });
-	//   },
-	// });
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setMessage(e.target.value);
 	};
 
-	const addMessage = () => sendMessageMutation({ message, fileId: parseInt(fileId) });
+	const addMessage = () => sendMessage({ message, fileId: parseInt(fileId) });
 
 	return (
 		<ChatContext.Provider

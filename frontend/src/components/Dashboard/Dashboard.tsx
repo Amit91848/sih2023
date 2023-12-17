@@ -28,6 +28,8 @@ import { msToTime } from "@/lib/utils";
 import { getGrammarCheck } from "@/api/file/getGrammarCheck";
 import SummaryFields from "./SummaryFields";
 import { GrammarCheckFields } from "./GrammarCheckerFields";
+import { EmptyScreen } from "../EmptyScreen";
+import { Textarea } from "../ui/textarea";
 
 // enum DiffMethod {
 // 	CHARS = "diffChars",
@@ -144,10 +146,10 @@ const Dashboard = () => {
 											<TabsContent value="long" className="flex-1 h-full">
 												<Summary batchSize={BatchSize.LONG} fileId={summaryFileId} />
 											</TabsContent>
-											<TabsContent value="medium">
+											<TabsContent value="medium" className="flex-1 h-full">
 												<Summary batchSize={BatchSize.MEDIUM} fileId={summaryFileId} />
 											</TabsContent>
-											<TabsContent value="short">
+											<TabsContent value="short" className="flex-1 h-full">
 												<Summary batchSize={BatchSize.SHORT} fileId={summaryFileId} />
 											</TabsContent>
 										</div>
@@ -199,16 +201,21 @@ const Summary = ({ batchSize, fileId }: SummaryProps) => {
 	const words = data?.data?.summary.trim().split(/\s+/);
 
 	return (
-		<div className="flex flex-col gap-2">
-			<div className="flex justify-between bg-gray-100 p-4 rounded-lg">
-				<p className="font-semibold">{file_data?.data?.name}</p>
-				<p>Time taken: {timeTaken}</p>
-				<p>Word Count: {words?.length}</p>
-			</div>
-			<div className="border border-gray-300 p-4 rounded-lg flex-1 h-full">
-				{data?.data?.summary}
-				{batchSize} {fileId}
-			</div>
+		<div className="flex flex-col gap-2 h-full w-full">
+			{data?.data ? (
+				<>
+					<div className="flex justify-between bg-gray-100 p-4 rounded-lg">
+						<p className="font-semibold">{file_data?.data?.name}</p>
+						<p>Time taken: {timeTaken}</p>
+						<p>Word Count: {words?.length}</p>
+					</div>
+					<Textarea value={data.data.summary} rows={20} cols={20} readOnly />
+				</>
+			) : (
+				<div className="flex items-center justify-center w-full h-full">
+					<EmptyScreen text="" />
+				</div>
+			)}
 		</div>
 	);
 };

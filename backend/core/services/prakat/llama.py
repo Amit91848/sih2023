@@ -4,9 +4,10 @@ from llama_cpp import Llama
 class LocalModel():
 
 
-    def __init__(self, gguf_filepath: str, context_window: int=2048) -> None:
+    def __init__(self, gguf_filepath: str,model_name: str, context_window: int=2048, ) -> None:
 
         self.context_window = context_window
+        self.model_name = model_name
 
         if gguf_filepath.endswith(".gguf"):
             self.model_filepath = gguf_filepath
@@ -85,7 +86,8 @@ class LocalModel():
 
         for generation in self.llm(prompt=prompt, **config, stream=True):
             token = generation["choices"][0]['text']
-            print(token)
             yield token
-        
+    
+    def get_model_name(self):
+        return self.model_name
     

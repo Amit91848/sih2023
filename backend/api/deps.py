@@ -56,7 +56,7 @@ def create_summarizer_model_service():
     return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
 
 def create_rag_model_service():
-    return LocalModel(gguf_filepath=os.path.join(os.getcwd(), "models", "Wizard-Vicuna-7B-Uncensored.Q4_0.gguf"), context_window=1024)
+    return LocalModel(gguf_filepath=os.path.join(os.getcwd(), "models", "Wizard-Vicuna-7B-Uncensored.Q4_0.gguf"), context_window=1024, model_name="Wizard-Vicuna-7B-Uncensored.Q4_0.gguf")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]

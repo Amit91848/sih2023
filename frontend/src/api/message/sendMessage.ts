@@ -5,7 +5,7 @@ interface ISendMessage {
 	fileId: number;
 }
 
-export const sendMessage = async ({ fileId, message }: ISendMessage) => {
+export const sendMessageText = async ({ fileId, message }: ISendMessage) => {
 	// const res = await cAxios.post(
 	// 	`${BACKEND_URL}/message`,
 	// 	{ fileId, message },

@@ -46,15 +46,4 @@ async def get_compute(request: Request):
     }
 
     return success_response(data=data)
-
-@router.get("/model")
-async def get_model(request: Request):
-    model_name = None
-    state = request.app.state
-    print(state)
-    
-    if state and hasattr(state, "current_model"):
-        model_name = state.current_model.get_model_name()
-            
-    return success_response(data=model_name)
     
