@@ -19,7 +19,6 @@ import { Checkbox } from "../ui/checkbox";
 import { DataTableFilterableColumn, DataTableSearchableColumn } from "@/types";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import SimpleBar from "simplebar-react";
 import { BatchSize } from "@/api/file/summarizeFile";
 import { getFileSummary } from "@/api/file/getFileSummary";
 import ReactDiffViewer from "react-diff-viewer-continued";
@@ -30,6 +29,7 @@ import SummaryFields from "./SummaryFields";
 import { GrammarCheckFields } from "./GrammarCheckerFields";
 import { EmptyScreen } from "../EmptyScreen";
 import { Textarea } from "../ui/textarea";
+import { SearchPage } from "./SearchPage";
 
 // enum DiffMethod {
 // 	CHARS = "diffChars",
@@ -105,21 +105,25 @@ const Dashboard = () => {
 	const [dialogContent, setDialogContent] = useState<string | null>(null);
 
 	return (
-		<main className="mx-auto max-w-7xl md:p-10">
-			<Header title="Dashboard">
+		<main className="mx-auto max-w-[90rem] md:p-10">
+			{/* <Header title="Dashboard">
 				<UploadButton />
-			</Header>
+			</Header> */}
 
 			{/* display all user files */}
-			<div className="mt-4 justify-center">
+			<div className="justify-center">
 				<Tabs defaultValue="files">
-					<TabsList className="flex bg-transparent w-full justify-center">
+					<TabsList className="gap-7 flex bg-transparent w-full justify-center">
 						<TabsTrigger value="files">Your Files</TabsTrigger>
 						<TabsTrigger value="summaries">Summarizer</TabsTrigger>
 						<TabsTrigger value="grammar-checks">Grammar Checker</TabsTrigger>
+						<TabsTrigger value="search-huggingface">Search For Models</TabsTrigger>
 					</TabsList>
 					<TabsContent value="files">
 						<Dialog>
+							<Header title="Dashboard">
+								<UploadButton />
+							</Header>
 							<Files
 								setSummaryFileId={setSummaryFileId}
 								setDialogContent={setDialogContent}
@@ -169,6 +173,9 @@ const Dashboard = () => {
 					</TabsContent>
 					<TabsContent value="grammar-checks">
 						<GrammarCheckFields />
+					</TabsContent>
+					<TabsContent value="search-huggingface">
+						<SearchPage />
 					</TabsContent>
 				</Tabs>
 			</div>
