@@ -3,13 +3,22 @@ import { Slider } from "../ui/slider";
 import { Button } from "../ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { summarizeText } from "@/api/file/summarizeText";
+import { Loader2 } from "lucide-react";
+import { useToast } from "../ui/use-toast";
 
 const SummaryFields = () => {
-  const [inputText, setInputText] = useState<string>("");
+	const [inputText, setInputText] = useState<string>("");
 
-  const {} = useMutation({
-    mutationFn: generateSummary
-  })
+	const [batchSize, setBatchSize] = useState<number[]>([2]);
+
+	const {
+		mutate: generateSummary,
+		data,
+		isLoading,
+	} = useMutation({
+		mutationFn: summarizeText,
+	});
 
 	return (
 		<div className="flex">
@@ -20,24 +29,42 @@ const SummaryFields = () => {
 						<label htmlFor="inputTextArea" className="text-lg font-semibold mb-2 block">
 							Input Text
 						</label>
-						<div className="w-1/3 flex gap-2">
-							<div>Short</div>
-							<Slider className="mx-2" min={1} max={3} step={1} defaultValue={[2]} />
+						<div className="w-2/5 flex gap-2">
 							<div>Long</div>
+							<Slider
+								className="mx-2 cursor-pointer"
+								min={1}
+								max={3}
+								step={1}
+								defaultValue={[2]}
+								onValueChange={(e) => setBatchSize(e)}
+								value={batchSize}
+							/>
+							<div>Short</div>
 						</div>
 					</div>
 					<Textarea
 						id="inputTextArea"
-						className="w-full p-2"
+						className="w-full p-2 text-green-400"
 						placeholder="Enter up to 600 words of text..."
 						rows={17}
 						cols={17}
-						// value={inputText}
-						onChange={(e) => {setInputText(e.currentTarget.value)}}
+						value={inputText}
+						onChange={(e) => {
+							setInputText(e.currentTarget.value);
+						}}
 					/>
 				</div>
-				<div className="mt-2 self-end">
-					<Button onClick={() => }>Summarize</Button>
+				<div className="mt-4 self-end">
+					<Button
+						disabled={isLoading}
+						onClick={() =>
+							generateSummary({ batchSize: batchSize[0], text: inputText })
+						}
+						className="w-28"
+					>
+						{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Summarize"}
+					</Button>
 				</div>
 			</div>
 			{/* Right side: Summarized Text Area */}
@@ -54,7 +81,7 @@ const SummaryFields = () => {
 					placeholder="Summarized text will appear here..."
 					rows={17}
 					cols={17}
-					// value={summarizedText}
+					value={data?.data?.summary ? data.data.summary : ""}
 					readOnly
 				/>
 			</div>

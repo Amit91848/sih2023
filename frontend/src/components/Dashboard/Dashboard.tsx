@@ -27,6 +27,7 @@ import { getFile } from "@/api/file/getFile";
 import { msToTime } from "@/lib/utils";
 import { getGrammarCheck } from "@/api/file/getGrammarCheck";
 import SummaryFields from "./SummaryFields";
+import { GrammarCheckFields } from "./GrammarCheckerFields";
 
 // enum DiffMethod {
 // 	CHARS = "diffChars",
@@ -111,9 +112,9 @@ const Dashboard = () => {
 			<div className="mt-4 justify-center">
 				<Tabs defaultValue="files">
 					<TabsList className="flex bg-transparent w-full justify-center">
-						<TabsTrigger value="files">Files</TabsTrigger>
-						<TabsTrigger value="summaries">Your Summaries</TabsTrigger>
-						<TabsTrigger value="grammer-checks">Your Grammer Checks</TabsTrigger>
+						<TabsTrigger value="files">Your Files</TabsTrigger>
+						<TabsTrigger value="summaries">Summarizer</TabsTrigger>
+						<TabsTrigger value="grammar-checks">Grammar Checker</TabsTrigger>
 					</TabsList>
 					<TabsContent value="files">
 						<Dialog>
@@ -163,6 +164,9 @@ const Dashboard = () => {
 					</TabsContent>
 					<TabsContent value="summaries">
 						<SummaryFields />
+					</TabsContent>
+					<TabsContent value="grammar-checks">
+						<GrammarCheckFields />
 					</TabsContent>
 				</Tabs>
 			</div>

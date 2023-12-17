@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request, Body
 from api.deps import create_summarizer_model_service, create_grammar_check_model_service, SessionDep, CurrentUser
 from pydantic import BaseModel
 from crud.crud_file import get_user_file
@@ -7,6 +7,7 @@ from crud.crud_grammar_check import create_grammar_check, update_grammar_check
 from langchain.document_loaders.pdf import PyMuPDFLoader
 from core.types import BatchSize,Status
 from datetime import datetime
+from core.utils import success_response
 
 class SummarizeBody(BaseModel):
   fileId: int
@@ -18,6 +19,9 @@ class SummarizeText(BaseModel):
 
 class GrammarBody(BaseModel):
   fileId: int
+
+class GrammarCheckText(BaseModel):
+  input_text: str
 
 router = APIRouter()
 
@@ -56,6 +60,18 @@ async def grammar_check(request: Request, currentUser: CurrentUser, session: Ses
     bg_tasks.add_task(call_grammar_check, request=request, session=session, grammar_check_id=db_grammar_check.id, txt_content=txt_content)
 
     return {"text_content": txt_content}
+
+@router.post("/grammarCheckText")
+async def grammar_check_text(request: Request, currentUser: CurrentUser, body: GrammarCheckText):
+  start_time = datetime.now()
+  llm = create_grammar_check_model_service()
+  request.app.state.current_model = llm
+  corrected_text = llm.grammar_check(text=body.input_text)
+  end_time = datetime.now()
+  # update_grammar_check(db=session, grammar_check_id=grammar_check_id, status=Status.SUCCESS, corrected_text=corrected_text)
+  elapsed_time = end_time - start_time
+  request.app.state.current_model = None
+  return success_response(data={ "corrected_text": corrected_text, "time_taken": elapsed_time })
   
 @router.post("/summarizeText")
 async def summarize_text(request: Request, currentUser: CurrentUser, body: SummarizeText):
@@ -69,7 +85,7 @@ async def summarize_text(request: Request, currentUser: CurrentUser, body: Summa
   end_time = datetime.now()
   elapsed_time = end_time - start_time
   
-  return {"summary": full_summary, "time_taken": elapsed_time}
+  return success_response(data={"summary": full_summary, "time_taken": elapsed_time}) 
 
 @router.post("/summarize")
 async def summarize_doc(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):

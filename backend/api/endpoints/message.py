@@ -10,7 +10,6 @@ from core.utils import success_response
 from openai import OpenAI
 from core.settings import settings
 from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
-from sse_starlette.sse import EventSourceResponse
 
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
