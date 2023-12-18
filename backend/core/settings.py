@@ -11,7 +11,6 @@ load_dotenv()
 
 class Settings(BaseSettings):
     PROJECT_NAME: str
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     S3_BUCKET_NAME: str | None
     S3_BUCKET_REGION: str | None
     S3_SECRET_ACCESS_KEY: str | None
