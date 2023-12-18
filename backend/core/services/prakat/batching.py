@@ -1,7 +1,5 @@
 import re
 
-
-
 class Batching():
 
     def __init__(self):
@@ -93,10 +91,13 @@ class Batching():
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
         # Remove last unfinished sentence
-        for i in range(len(cleaned)-1, -1, -1):
-            if cleaned[i]==".":
-                cleaned = cleaned[:i+1]
-                break
+        # for i in range(len(cleaned)-1, -1, -1):
+        #     if cleaned[i]==".":
+        #         cleaned = cleaned[:i+1]
+        #         break
+        
+        if cleaned[-1]!=".":
+            cleaned = cleaned + "."
             
         return cleaned
     
@@ -126,7 +127,15 @@ class Batching():
                 batch = batch.strip()
             else:
                 final_batches.append(batch.strip())
+                for sent in self.split_into_sentences(batch.strip()):
+                    sentences.remove(sent)
                 batch = ""
+        
+        if len(sentences)!=0:
+            for sent in sentences:
+                batch = batch + " " + sent
+                batch = batch.strip()
+            final_batches.append(batch)
         
         return final_batches
     

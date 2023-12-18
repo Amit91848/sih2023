@@ -4,8 +4,17 @@ import { Button } from "../ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { summarizeText } from "@/api/file/summarizeText";
-import { Clipboard, Loader2 } from "lucide-react";
+import { Clipboard, Loader2, MoveDown } from "lucide-react";
 import toast from "react-hot-toast";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { BatchSize } from "@/api/file/summarizeFile";
 
 const SummaryFields = () => {
 	const [inputText, setInputText] = useState<string>("");
@@ -29,8 +38,8 @@ const SummaryFields = () => {
 						<label htmlFor="inputTextArea" className="text-lg font-semibold mb-2 block">
 							Input Text
 						</label>
-						<div className="w-2/5 flex gap-2">
-							<div>Long</div>
+						{/* <div className="w-2/5 flex gap-2"> */}
+						{/* <div>Long</div>
 							<Slider
 								className="mx-2 cursor-pointer"
 								min={1}
@@ -40,8 +49,46 @@ const SummaryFields = () => {
 								onValueChange={(e) => setBatchSize(e)}
 								value={batchSize}
 							/>
-							<div>Short</div>
-						</div>
+							<div>Short</div> */}
+						<DropdownMenu>
+							<DropdownMenuTrigger>
+								<Button disabled={isLoading} variant="outline" className="flex gap-1">
+									<span>
+										{!isLoading ? "Select Summary Length" : "Generating Summary"}
+									</span>{" "}
+									<MoveDown width={15} height={15} />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuGroup>
+									<DropdownMenuItem
+										className="cursor-pointer"
+										onClick={() =>
+											generateSummary({ batchSize: BatchSize.LONG, text: inputText })
+										}
+									>
+										Long
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										className="cursor-pointer"
+										onClick={() =>
+											generateSummary({ text: inputText, batchSize: BatchSize.MEDIUM })
+										}
+									>
+										Medium
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										className="cursor-pointer"
+										onClick={() =>
+											generateSummary({ text: inputText, batchSize: BatchSize.SHORT })
+										}
+									>
+										Short
+									</DropdownMenuItem>
+								</DropdownMenuGroup>
+							</DropdownMenuContent>
+						</DropdownMenu>
+						{/* </div> */}
 					</div>
 					<Textarea
 						id="inputTextArea"
