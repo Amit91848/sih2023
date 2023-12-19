@@ -11,3 +11,6 @@ class VectorStoreService(ABC):
 
     def similarity_search(self, query: str, limit: int, metadata_filter: Optional[Dict[str, str]]) -> List[Document]:
         pass
+    
+    def upload_text(self, text: str, embedding: Embeddings, index_name: str, file_id: int):
+        pass

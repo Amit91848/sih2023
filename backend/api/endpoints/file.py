@@ -9,6 +9,8 @@ import tempfile
 from crud.crud_summary import get_latest_summary, get_all_summaries_by_file_id
 from crud.crud_grammar_check import get_grammar_check
 from collections import defaultdict
+from core.services.prakat.ocr import generate_ocr
+
 
 from api.deps import CurrentUser, SessionDep, FileUploadServiceDep, EmbeddingDep, VectorStoreDep
 from core.settings import settings
@@ -35,7 +37,18 @@ class FileUploadBody(BaseModel):
     pass
 
 
-async def upload_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, file_url: str, file_id: int):
+async def upload_text_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, text: str, file_id: int):
+    try:
+        vector_store.upload_text(embedding=embeddings, file_id=file_id, index_name="prakat", text=text)
+        print("uploaded to pinecone")   
+    except ApiException:
+        print("err while uploading to pinecone ")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Error uploading to pinecone")
+
+    
+    
+async def upload_pdf_to_vector_database(vector_store: VectorStoreService, embeddings: Embeddings, file_url: str, file_id: int):
     # file_blob = requests.get(file_url)
 
     # if file_blob.status_code == 200:
@@ -65,6 +78,8 @@ async def upload_to_vector_database(vector_store: VectorStoreService, embeddings
         #             os.remove(temp_pdf_path)
         #         except Exception as e:
         #             print(f"Error deleting temporary file: {e}")
+        
+        
 
 
 @router.post("/upload")
@@ -74,7 +89,7 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='No file found!!'
         )
-
+    ispdf = file.content_type == "application/pdf"
     contents = await file.read()
     size = len(contents)
 
@@ -88,18 +103,27 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
 
     file_url, isLocal = upload_service.upload(file_content=io.BytesIO(
         contents), file_name=file_name)
-    print("uploaded to aws")
-
+    print("uploaded pdf to local path")
+         
     if not file_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error uploading file!!")
 
     print("uploaded to pinecone")
+    
+    data = None
+    if not ispdf:
+        img_data, file_url = generate_ocr(file_name=file_name, img_path=file_url)
+        data = img_data
 
     file_obj = create_file(db=session, name=file.filename,
-                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size)
+                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size, isPdf=ispdf)
     
-    await upload_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url, file_id=file_obj.id)
+    if ispdf:
+        await upload_pdf_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url, file_id=file_obj.id)
+    else:
+        print("Uploading txt to vector db")
+        await upload_text_to_vector_database(embeddings=embeddings, vector_store=vector_store, text=data, file_id=file_obj.id)
 
     return success_response(data={"name": file.filename, "contentType": file.content_type, "url": file_obj.url, "key": file_obj.key})
 

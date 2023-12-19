@@ -5,6 +5,8 @@ import { getFile } from "@/api/file/getFile";
 import { Loader } from "lucide-react";
 import { useResizeDetector } from "react-resize-detector";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
+import Image from "next/image";
+import SimpleBar from "simplebar-react";
 
 interface PageProps {
 	fileId: string;
@@ -27,13 +29,27 @@ const PdfChat = ({ fileId: file_id }: PageProps) => {
 					<div className="flex-1 xl:flex">
 						<div className="px-4 py-6 sm:px-6 lg:pl-8 xl:flex-1 xl:pl-6">
 							{/* Main area */}
-							<PDFRenderer
-								url={
-									file?.data?.isLocal ? convertFileSrc(file.data.url) : file.data.url
-								}
-								childWidth={width}
-								childRef={ref}
-							/>
+							{file?.data?.isPdf ? (
+								<PDFRenderer
+									url={
+										file?.data?.isLocal ? convertFileSrc(file.data.url) : file.data.url
+									}
+									childWidth={width}
+									childRef={ref}
+								/>
+							) : (
+								<div className="max-h-[calc(100vh-10rem)]">
+									<SimpleBar className="max-h-[calc(100vh-10rem)]">
+										<Image
+											className="w-full"
+											width="100"
+											height="100"
+											src={convertFileSrc(file?.data.url)}
+											alt={file?.data?.name || ""}
+										/>
+									</SimpleBar>
+								</div>
+							)}
 						</div>
 					</div>
 					<div className="shrink-0 flex-[0.75] border-t border-gray-200 lg:w-96 lg:border-l lg:border-t-0">
