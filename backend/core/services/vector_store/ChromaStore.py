@@ -25,7 +25,7 @@ class ChromaService(VectorStoreService):
         for document in range(len(documents)):
             page = documents[document].page_content
             batching = Batching()
-            sets = batching.get_sets(text=page, set_size=5)
+            sets = batching.get_sets(text=page, set_size=3)
 
             for i in range(len(sets)):
                 batch = ''.join(sets[i])

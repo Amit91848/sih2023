@@ -16,7 +16,7 @@ from core.services.vector_store.service import VectorStoreService, PineconeServi
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from core.services.embedding.openai import get_openai_embeddings
 from langchain_core.embeddings import Embeddings
-from core.services.prakat.models import FlanT5_CT2
+from core.services.prakat.models import FlanT5_CT2, Generator_CT2
 from core.services.prakat.llama import LocalModel
 
 
@@ -56,7 +56,7 @@ def create_summarizer_model_service():
     return FlanT5_CT2(model_path=os.path.join(os.getcwd(),"models", "t5_summarizer_ct2"), tokenizer_path=os.path.join(os.getcwd(), "models", "flan_t5_base_tokenizer"), model_name="t5_summarizer_ct2")
 
 def create_rag_model_service():
-    return LocalModel(gguf_filepath=os.path.join(os.getcwd(), "models", "Wizard-Vicuna-7B-Uncensored.Q4_0.gguf"), context_window=1024, model_name="Wizard-Vicuna-7B-Uncensored.Q4_0.gguf")
+    return Generator_CT2(model_path=os.path.join(os.getcwd(), "models", "phi-1_5-ct2-int8"), tokenizer_path=os.path.join(os.getcwd(), "models", "phi-1_5-tokenizer"), model_name="phi-1_5-ct2-int8")
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]

@@ -253,10 +253,11 @@ class FlanT5_CT2():
 class Generator_CT2():
 
 
-    def __init__(self, model_path: str, tokenizer_path: str) -> None:
+    def __init__(self, model_path: str, tokenizer_path: str, model_name: str) -> None:
         super().__init__()
 
         self.model_path = model_path
+        self.model_name = model_name
         self.cpu_cores = cpu_count()
 
         try:
@@ -290,3 +291,6 @@ class Generator_CT2():
         
         output = self.tokenizer.decode(results[0].sequences_ids[0])
         return output
+    
+    def get_model_name(self):
+        return self.model_name
