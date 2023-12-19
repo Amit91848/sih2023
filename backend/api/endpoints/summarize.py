@@ -80,7 +80,7 @@ async def summarize_text(request: Request, currentUser: CurrentUser, body: Summa
   
   llm = create_summarizer_model_service()
   request.app.state.current_model = llm
-  full_summary = llm.batch_summarize(text=body.text, batch_size=body.batchSize)
+  full_summary = llm.batch_summarize(text=body.text, batch_size=body.batchSize, is_output=True)
   request.app.state.current_model = None
   
   end_time = datetime.now()

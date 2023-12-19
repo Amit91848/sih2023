@@ -172,7 +172,7 @@ class FlanT5_CT2():
         return output_text
     
 
-    def batch_summarize(self, text: str, batch_size: int) -> str:
+    def batch_summarize(self, text: str, batch_size: int, is_output: bool=False) -> str:
         size = 2048
         if batch_size == BatchSize.LONG:
             size = 512
@@ -180,7 +180,10 @@ class FlanT5_CT2():
             size = 1024
         elif batch_size == BatchSize.SHORT:
             size = 2048
-        text = self.batcher.clean_text(text)
+        if is_output:
+            text = self.batcher.clean_text(text=text, strip_trailing=True)
+        else:
+            text = self.batcher.clean_text(text=text, strip_trailing=False)
         batches = self.batcher.get_batches(text=text, batch_size=size)
         print(batches)
         summaries = []
@@ -212,7 +215,7 @@ class FlanT5_CT2():
     
 
     def grammar_check(self, text: str):
-        text = self.batcher.clean_text(text)
+        text = self.batcher.clean_text(text, strip_trailing=False)
         input_tokens = self.tokenizer.convert_ids_to_tokens(self.tokenizer.encode(text))
 
         results = self.translator.translate_batch(

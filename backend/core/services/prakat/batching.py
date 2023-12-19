@@ -73,7 +73,7 @@ class Batching():
         return ' '.join(sentences[:last_full_stop_index + 1]).strip()
     
 
-    def clean_text(self, text:str) -> str:
+    def clean_text(self, text:str, strip_trailing:bool=True) -> str:
 
         # Remove control characters
         cleaned = re.sub(r'\\x[0-9a-fA-F]{2,3}', '', text)
@@ -91,13 +91,15 @@ class Batching():
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
         # Remove last unfinished sentence
-        # for i in range(len(cleaned)-1, -1, -1):
-        #     if cleaned[i]==".":
-        #         cleaned = cleaned[:i+1]
-        #         break
+        if strip_trailing:
+            for i in range(len(cleaned)-1, -1, -1):
+                if cleaned[i]==".":
+                    cleaned = cleaned[:i+1]
+                    break
         
-        if cleaned[-1]!=".":
-            cleaned = cleaned + "."
+        if not strip_trailing:
+            if cleaned[-1]!=".":
+                cleaned = cleaned + "."
             
         return cleaned
     
