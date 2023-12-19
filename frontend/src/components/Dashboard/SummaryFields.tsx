@@ -6,6 +6,7 @@ import { useState } from "react";
 import { summarizeText } from "@/api/file/summarizeText";
 import { Clipboard, Loader2, MoveDown } from "lucide-react";
 import toast from "react-hot-toast";
+import { Label } from "@radix-ui/react-label";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -15,11 +16,20 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { BatchSize } from "@/api/file/summarizeFile";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
 
 const SummaryFields = () => {
 	const [inputText, setInputText] = useState<string>("");
 
-	const [batchSize, setBatchSize] = useState<number[]>([2]);
+	const [batchSize, setBatchSize] = useState<number>(1);
 
 	const {
 		mutate: generateSummary,
@@ -28,6 +38,8 @@ const SummaryFields = () => {
 	} = useMutation({
 		mutationFn: summarizeText,
 	});
+
+	const words = data?.data?.summary.trim().split(/\s+/);
 
 	return (
 		<div className="flex">
@@ -50,7 +62,7 @@ const SummaryFields = () => {
 								value={batchSize}
 							/>
 							<div>Short</div> */}
-						<DropdownMenu>
+						{/* <DropdownMenu>
 							<DropdownMenuTrigger>
 								<Button disabled={isLoading} variant="outline" className="flex gap-1">
 									<span>
@@ -87,7 +99,22 @@ const SummaryFields = () => {
 									</DropdownMenuItem>
 								</DropdownMenuGroup>
 							</DropdownMenuContent>
-						</DropdownMenu>
+						</DropdownMenu> */}
+						<div className="flex w-fit gap-3 items-center ">
+							<p className="whitespace-nowrap">Select summary length</p>
+							<Select onValueChange={(e) => setBatchSize(parseInt(e))} defaultValue="1">
+								<SelectTrigger>
+									<SelectValue placeholder="Select summary length" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectGroup>
+										<SelectItem value="1">Long</SelectItem>
+										<SelectItem value="2">Medium</SelectItem>
+										<SelectItem value="3">Short</SelectItem>
+									</SelectGroup>
+								</SelectContent>
+							</Select>
+						</div>
 						{/* </div> */}
 					</div>
 					<Textarea
@@ -105,9 +132,7 @@ const SummaryFields = () => {
 				<div className="mt-4 self-end">
 					<Button
 						disabled={isLoading}
-						onClick={() =>
-							generateSummary({ batchSize: batchSize[0], text: inputText })
-						}
+						onClick={() => generateSummary({ batchSize: batchSize, text: inputText })}
 						className="w-28"
 					>
 						{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Summarize"}
@@ -145,7 +170,7 @@ const SummaryFields = () => {
 					<div className="mt-4 flex">
 						{data?.data?.time_taken && (
 							<div className="text-sm self-end">
-								Time taken: {data.data.time_taken} seconds
+								Time taken: {data.data.time_taken} seconds Word Count: {words?.length}
 							</div>
 						)}
 					</div>

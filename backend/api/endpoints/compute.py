@@ -11,7 +11,7 @@ def get_gpu_memory_usage():
         gpu = GPUtil.getGPUs()[0]
         return gpu.memoryFree, gpu.memoryUsed, gpu.memoryTotal
     except Exception as e:
-        print(f"Error getting GPU memory usage: {e}")
+        # print(f"Error getting GPU memory usage: {e}")
         return None
 
 def get_pid_by_name(process_name):
@@ -22,14 +22,14 @@ def get_pid_by_name(process_name):
 @router.get("/info")
 async def get_compute(request: Request):
     pid = os.getpid()
-    print(pid)
+    # print(pid)
     process = psutil.Process(pid)
     ram = process.memory_info().rss / 1024  ** 2
     cpu_percent = process.cpu_percent(interval=1)
     # cpu_percent2 = process.cpu_percent(interval=None)
     gpu_memory_usage = get_gpu_memory_usage()
-    print(f"Ram: {ram}")
-    print(f"CPU: {cpu_percent}")
+    # print(f"Ram: {ram}")
+    # print(f"CPU: {cpu_percent}")
 
     model_name = None
     state = request.app.state
