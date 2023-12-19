@@ -94,11 +94,10 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
 			setIsLoading(false);
 		},
 		onSuccess: async (res) => {
+			console.log("Success");
 			const reader = res?.getReader();
 			const decoder = new TextDecoder();
 			let done = false;
-
-			// accumulated response
 
 			while (!done) {
 				const { value, done: doneReading } = await reader.read();

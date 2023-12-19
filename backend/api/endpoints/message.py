@@ -14,6 +14,7 @@ from core.services.prakat.llama import LocalModel
 from openai import OpenAI
 from core.settings import settings
 from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
+from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -71,17 +72,21 @@ async def post_message(request: Request,vector_store: VectorStoreDep, embeddings
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
     rag_ai = create_rag_model_service()
-    # request.app.state.current_model = rag_ai
-    # def stream():
-    #     acc_response = ""
-    #     ai_response = rag_ai.stream_inference(query=originalMsg)
-    #     for token in ai_response:
-    #         acc_response += token
-    #         yield token
-    #     ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
-    #     request.app.state.current_model = None
-    generator = send_message(originalMsg, model=rag_ai)
-    return StreamingResponse(content=generator, media_type='text/event-stream')
+    request.app.state.current_model = rag_ai
+    async def stream():
+        acc_response = ""
+        ai_response = rag_ai.stream_inference(query=originalMsg, context=context_text)
+        for token in ai_response: # GenerationStepResult
+            acc_response += token.token
+            print(token.token)
+            yield ServerSentEvent(data=token.token, event="EventName")
+        ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
+        request.app.state.current_model = None
+    # ai_response = rag_ai.stream_inference(query=originalMsg)
+    # create_message(db=session, file_id=fileId, user_id=current_user.id, message=ai_response, isUser=False)
+    # generator = send_message(originalMsg, model=rag_ai)
+    return EventSourceResponse(content=stream(), media_type='text/event-stream')
+    # return success_response(data=ai_response)
 
 
 @router.get("/all")
