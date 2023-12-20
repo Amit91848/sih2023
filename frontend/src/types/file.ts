@@ -16,4 +16,5 @@ export interface IFile {
 	isLocal: boolean;
 	summary_status?: Status;
 	size: number;
+	isPdf: boolean;
 }

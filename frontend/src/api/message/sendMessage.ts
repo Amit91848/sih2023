@@ -1,4 +1,4 @@
-import { BACKEND_URL, HEADER_TOKEN, cAxios } from "@/lib/utils";
+import { BACKEND_URL, HEADER_TOKEN } from "@/lib/utils";
 
 interface ISendMessage {
 	message: string;
@@ -6,16 +6,6 @@ interface ISendMessage {
 }
 
 export const sendMessageText = async ({ fileId, message }: ISendMessage) => {
-	// const res = await cAxios.post(
-	// 	`${BACKEND_URL}/message`,
-	// 	{ fileId, message },
-	// 	{
-	// 		headers: {
-	// 			Authorization: `Bearer ${HEADER_TOKEN}`,
-	// 		},
-	// 		responseType: "stream",
-	// 	},
-	// );
 	const response = await fetch(`${BACKEND_URL}/message`, {
 		method: "POST",
 		body: JSON.stringify({
