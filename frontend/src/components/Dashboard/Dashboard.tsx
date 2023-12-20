@@ -30,6 +30,7 @@ import { GrammarCheckFields } from "./GrammarCheckerFields";
 import { EmptyScreen } from "../EmptyScreen";
 import { Textarea } from "../ui/textarea";
 import { SearchPage } from "./SearchPage";
+import { getLatestShortSummary } from "@/api/file/getShortSummary";
 
 // enum DiffMethod {
 // 	CHARS = "diffChars",
@@ -158,6 +159,8 @@ const Dashboard = () => {
 											</TabsContent>
 										</div>
 									</Tabs>
+								) : dialogContent === "short-summary" ? (
+									<ShortSummary fileId={summaryFileId} />
 								) : (
 									// <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
 									<div className="max-h[calc(100vh-10rem)]">
@@ -187,6 +190,22 @@ interface SummaryProps {
 	fileId: number | null;
 	batchSize: BatchSize;
 }
+
+const ShortSummary = ({ fileId }: { fileId: number }) => {
+	const { data: shortSummary } = useQuery({
+		queryFn: () => getLatestShortSummary(fileId),
+		queryKey: ["short-summary", fileId],
+	});
+	return (
+		<div className="flex w-full h-full border border-gray-200 roudned-lg p-4">
+			{shortSummary ? (
+				<div>{shortSummary?.data?.summary}</div>
+			) : (
+				"Generate short summary first"
+			)}
+		</div>
+	);
+};
 
 const Summary = ({ batchSize, fileId }: SummaryProps) => {
 	const { data } = useQuery({

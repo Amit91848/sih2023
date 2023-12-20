@@ -23,6 +23,7 @@ import { Link } from "@/lib/navigation";
 import { DialogTrigger } from "../ui/dialog";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { generateShortSummary } from "@/api/file/shortSummaryFile";
 
 interface IFilesProps {
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
@@ -93,7 +94,7 @@ const File = ({
 	const { mutate: generateSummary } = useMutation({
 		mutationFn: summarizeFile,
 		onMutate() {
-			toast.success("Your requested summary is being generated!")
+			toast.success("Your requested summary is being generated!");
 		},
 		onSuccess() {
 			queryClient.invalidateQueries(["files"]);
@@ -106,6 +107,11 @@ const File = ({
 			queryClient.invalidateQueries(["files"]);
 		},
 	});
+
+	const { mutate: callGenerateShortSummary, isLoading: shortSummaryLoading } =
+		useMutation({
+			mutationFn: generateShortSummary,
+		});
 
 	return (
 		<>
@@ -157,8 +163,8 @@ const File = ({
 												>
 													{file.summary_status === Status.PROCESSING ||
 													file.summary_status === Status.PENDING
-														? "Generating Summary"
-														: "Generate Summary"}
+														? "Paraphrasing File"
+														: "Paraphrase"}
 												</DropdownMenuSubTrigger>
 												<DropdownMenuSubContent>
 													<DropdownMenuItem
@@ -205,7 +211,32 @@ const File = ({
 														console.log(file.id);
 													}}
 												>
-													<p> View Summaries </p>
+													<p> View Paraphrases </p>
+												</DialogTrigger>
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={() => {
+													console.log(file.id);
+													callGenerateShortSummary(file.id);
+												}}
+												className="cursor-pointer"
+											>
+												{/* <Dialog> */}
+												{/* <DialogTrigger */}
+
+												<p> Generate Summary </p>
+												{/* </DialogTrigger> */}
+											</DropdownMenuItem>
+											<DropdownMenuItem className="cursor-pointer">
+												{/* <Dialog> */}
+												<DialogTrigger
+													onClick={() => {
+														setSummaryFileId(file.id);
+														setDialogContent("short-summary");
+														console.log(file.id);
+													}}
+												>
+													<p> View Summary </p>
 												</DialogTrigger>
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />

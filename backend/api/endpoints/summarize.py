@@ -2,16 +2,20 @@ from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request, 
 from api.deps import create_summarizer_model_service, create_grammar_check_model_service, SessionDep, CurrentUser
 from pydantic import BaseModel
 from crud.crud_file import get_user_file
-from crud.crud_summary import create_summary, update_summary
+from crud.crud_summary import create_summary, update_summary, get_short_summary
 from crud.crud_grammar_check import create_grammar_check, update_grammar_check
 from langchain.document_loaders.pdf import PyMuPDFLoader
 from core.types import BatchSize,Status
 from datetime import datetime
 from core.utils import success_response
+import requests
 
 class SummarizeBody(BaseModel):
   fileId: int
   batchSize: BatchSize
+  
+class GenerateShortSummary(BaseModel):
+  file_id: int
   
 class SummarizeText(BaseModel):
   text: str
@@ -113,3 +117,46 @@ async def summarize_doc(request: Request, session: SessionDep, currentUser: Curr
   # finally:
   #   llm.unload_model()
   
+      
+@router.get("/get-latest-short-summary/{fileId}") 
+async def get_latest_short_summary(session: SessionDep, fileId: int):
+  summary = get_short_summary(db=session, file_id=fileId)
+  
+  return success_response(data=summary)
+  
+  
+@router.post("/generate-short-summary")
+async def generate_short_summary(session: SessionDep, current_user: CurrentUser, body: GenerateShortSummary):
+  file = get_user_file(db=session, user_id=current_user.id, file_id=body.file_id)
+
+  if not file:
+    raise HTTPException(status=status.HTTP_404, detail="File not found")
+
+  pdf_loader = PyMuPDFLoader(file_path=file[0].url)
+  pdf = pdf_loader.load()
+  txt_content = ""
+  for page_num in range(len(pdf)):
+    page = pdf[page_num].page_content
+    txt_content += page
+    
+  db_summary = create_summary(session, type=BatchSize.SHORTER, file_id=file[0].id, summary="", user_id=current_user.id, status=Status.PENDING)
+
+
+
+    
+  summary = generate_summary(txt_content)
+  update_summary(db=session, summary_id=db_summary.id, status=Status.SUCCESS, summary=summary)
+  
+  
+  return summary
+    
+
+  
+
+
+def generate_summary(text: str):
+  res = requests.post('http://216.48.184.70/batch_summarize', json={"text": text})
+
+  print(res.text)
+
+  return res.text
