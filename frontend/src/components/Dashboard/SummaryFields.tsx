@@ -170,7 +170,9 @@ const SummaryFields = () => {
 					<div className="mt-4 flex">
 						{data?.data?.time_taken && (
 							<div className="text-sm self-end">
-								Time taken: {data.data.time_taken} seconds Word Count: {words?.length}
+								<p>BLEU Score: {data.data.bleu_score}</p>
+								<p>Time taken: {data.data.time_taken} seconds</p> 
+								<p>Word Count: {words?.length}</p>
 							</div>
 						)}
 					</div>

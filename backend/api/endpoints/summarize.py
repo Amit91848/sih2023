@@ -28,7 +28,7 @@ router = APIRouter()
 def call_batch_summarize(request: Request, session: SessionDep, txt_content: str, summary_id: int, batch_size: BatchSize):
   llm = create_summarizer_model_service()
   request.app.state.current_model = llm
-  full_summary = llm.batch_summarize(text=txt_content, batch_size=batch_size)
+  full_summary, bleu_score = llm.batch_summarize(text=txt_content, batch_size=batch_size)
   update_summary(db=session, summary_id=summary_id, status=Status.SUCCESS, summary=full_summary)
   request.app.state.current_model = None
   print(full_summary)
@@ -80,13 +80,14 @@ async def summarize_text(request: Request, currentUser: CurrentUser, body: Summa
   
   llm = create_summarizer_model_service()
   request.app.state.current_model = llm
-  full_summary = llm.batch_summarize(text=body.text, batch_size=body.batchSize, is_output=True)
+  full_summary, bleu_score = llm.batch_summarize(text=body.text, batch_size=body.batchSize, is_output=True)
   request.app.state.current_model = None
   
   end_time = datetime.now()
   elapsed_time = end_time - start_time
+  # elapsed_time = round(elapsed_time, 2)
   
-  return success_response(data={"summary": full_summary, "time_taken": elapsed_time}) 
+  return success_response(data={"summary": full_summary, "time_taken": elapsed_time, "bleu_score": bleu_score}) 
 
 @router.post("/summarize")
 async def summarize_doc(request: Request, session: SessionDep, currentUser: CurrentUser, body: SummarizeBody, bg_tasks: BackgroundTasks):

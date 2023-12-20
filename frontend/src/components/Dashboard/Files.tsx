@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@/lib/navigation";
 import { DialogTrigger } from "../ui/dialog";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 interface IFilesProps {
 	setSummaryFileId: React.Dispatch<React.SetStateAction<number | null>>;
@@ -91,6 +92,9 @@ const File = ({
 
 	const { mutate: generateSummary } = useMutation({
 		mutationFn: summarizeFile,
+		onMutate() {
+			toast.success("Your requested summary is being generated!")
+		},
 		onSuccess() {
 			queryClient.invalidateQueries(["files"]);
 		},

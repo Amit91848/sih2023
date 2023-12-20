@@ -4,6 +4,7 @@ from transformers import AutoModelForSeq2SeqLM
 from transformers import AutoTokenizer
 from ctranslate2 import Translator, Generator
 from core.types import BatchSize
+from datasets import load_metric
 
 
 # FlanModel
@@ -192,7 +193,14 @@ class FlanT5_CT2():
             summaries.append(summary)
 
         full_summary = '\n'.join(summaries)
-        return full_summary
+        bleu_score = self.get_bleu_score(text, full_summary)
+        return full_summary, bleu_score
+    
+    def get_bleu_score(self, original:str, summary:str)-> float:
+        sacrebleu = load_metric("sacrebleu")
+        result = sacrebleu.compute(predictions=[summary], references=[[original]])
+        score = round(result['score']/100, 2)
+        return score
     
 
     def batch_summarize_native(self, text: str, token_batch_size: int) -> str:

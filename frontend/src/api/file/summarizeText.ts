@@ -4,6 +4,7 @@ import { BatchSize } from "./summarizeFile";
 interface ISummary {
 	summary: string;
 	time_taken: Date;
+	bleu_score: number;
 }
 
 export const summarizeText = async ({
