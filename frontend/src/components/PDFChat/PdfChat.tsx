@@ -7,6 +7,7 @@ import { useResizeDetector } from "react-resize-detector";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import Image from "next/image";
 import SimpleBar from "simplebar-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 interface PageProps {
 	fileId: string;
@@ -38,16 +39,35 @@ const PdfChat = ({ fileId: file_id }: PageProps) => {
 									childRef={ref}
 								/>
 							) : (
-								<div className="max-h-[calc(100vh-10rem)]">
-									<SimpleBar className="max-h-[calc(100vh-10rem)]">
-										<Image
-											className="w-full"
-											width="100"
-											height="100"
-											src={convertFileSrc(file?.data.url)}
-											alt={file?.data?.name || ""}
-										/>
-									</SimpleBar>
+								<div className="max-h-[calc(100vh-10rem)] w-full flex justify-center">
+									<Tabs defaultValue="ocr-processed" className="w-full">
+										<SimpleBar className="max-h-[calc(100vh-10rem)]">
+											<TabsList className=" flex bg-transparent justify-center">
+												<TabsTrigger value="ocr-processed">Original Image</TabsTrigger>
+												<TabsTrigger value="ocr-original">Processed Image</TabsTrigger>
+												<TabsTrigger value="ocr-text">View Extracted Text</TabsTrigger>
+											</TabsList>
+											<TabsContent value="ocr-processed">
+												<Image
+													className="w-full"
+													width="100"
+													height="100"
+													src={convertFileSrc(file?.data.url)}
+													alt={file?.data?.name || ""}
+												/>
+											</TabsContent>
+											<TabsContent value="ocr-original">
+												<Image
+													className="w-full"
+													width="100"
+													height="100"
+													src={convertFileSrc(file?.data?.ocrOgImage)}
+													alt={file?.data?.name || ""}
+												/>
+											</TabsContent>
+											<TabsContent value="ocr-text">{file?.data?.ocrText}</TabsContent>
+										</SimpleBar>
+									</Tabs>
 								</div>
 							)}
 						</div>

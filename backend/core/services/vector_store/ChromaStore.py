@@ -43,7 +43,7 @@ class ChromaService(VectorStoreService):
     
     def upload_document(self, documents: List[Document], embedding: Embeddings, index_name: str, file_id: int):
         client = chromadb.PersistentClient(path=os.getcwd())
-        collection = client.get_or_create_collection(name=index_name)
+        collection = client.get_or_create_collection(name=index_name, metadata={"hnsw:space": "cosine"})
 
         sentence_transformer = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -62,7 +62,7 @@ class ChromaService(VectorStoreService):
                 emb = sentence_transformer.encode(batch).tolist()
                 id = uuid.uuid4()
                 
-                metadatas.append({"file_id": file_id})
+                metadatas.append({"file_id": file_id, "page_no": document})
                 ids.append(str(id))
                 embeddings.append(emb)
                 documents_str.append(batch)
@@ -82,4 +82,19 @@ class ChromaService(VectorStoreService):
         query_emb = sentence_transformer.encode(query).tolist()
 
         search_results = collection.query(query_embeddings=[query_emb], n_results=limit, where=metadata_filter)
+        print(search_results)
+        
+        # combined_data = []
+
+        # for i in range(len(search_results['ids'][0])):
+        #     entry = {
+        #         'ids': search_results['ids'][0][i],
+        #         'distances': search_results['distances'][0][i],
+        #         'metadatas': search_results['metadatas'][0][i],
+        #         'documents': search_results['documents'][0][i]
+        #     }
+        #     combined_data.append(entry)
+            
+        # print(combined_data)
+            
         return search_results["documents"][0]

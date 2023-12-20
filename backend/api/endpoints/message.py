@@ -1,6 +1,10 @@
 from api.deps import CurrentUser, SessionDep
 from typing import Optional
 
+# 216.48.184.70/batchsummarize
+
+# batch_summarize
+
 from fastapi import APIRouter, status, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -15,6 +19,7 @@ from openai import OpenAI
 from core.settings import settings
 from api.deps import EmbeddingDep, VectorStoreDep, create_rag_model_service
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+import requests
 
 
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -71,22 +76,53 @@ async def post_message(request: Request,vector_store: VectorStoreDep, embeddings
         session, fileId, current_user.id, 6)
     formatted_prev_messages = [format_message(msg) for msg in prev_messages]
 
-    rag_ai = create_rag_model_service()
-    request.app.state.current_model = rag_ai
-    async def stream():
-        acc_response = ""
-        ai_response = rag_ai.stream_inference(query=originalMsg, context=context_text)
-        for token in ai_response: # GenerationStepResult
-            acc_response += token.token
-            print(token.token)
-            yield ServerSentEvent(data=token.token, event="EventName")
-        ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
-        request.app.state.current_model = None
+    # rag_ai = create_rag_model_service()
+    # request.app.state.current_model = rag_ai
+    # async def stream():
+    #     acc_response = ""
+    #     ai_response = rag_ai.stream_inference(query=originalMsg, context=context_text)
+    #     for token in ai_response: # GenerationStepResult
+    #         acc_response += token.token
+    #         print(token.token)
+    #         yield ServerSentEvent(data=token.token, event="EventName")
+    #     ai_message = create_message(db=session, file_id=fileId, user_id=current_user.id, message=acc_response, isUser=False)
+    #     request.app.state.current_model = None
     # ai_response = rag_ai.stream_inference(query=originalMsg)
-    # create_message(db=session, file_id=fileId, user_id=current_user.id, message=ai_response, isUser=False)
     # generator = send_message(originalMsg, model=rag_ai)
-    return EventSourceResponse(content=stream(), media_type='text/event-stream')
-    # return success_response(data=ai_response)
+    # return EventSourceResponse(content=stream(), media_type='text/event-stream')
+
+    # ai_response = requests.post("http://216.48.180.179/inference",json={"query": f"{originalMsg}","context":f"{context_text}"})
+    # print(ai_response.text)
+    # print(ai_response.json())
+    # create_message(db=session, file_id=fileId, user_id=current_user.id, message=ai_response.text, isUser=False)
+    # return success_response(data=ai_response.text)
+    
+    # PREVIOUS CONVERSATION:
+    #               ${formattedPrevMessages.map((message) => {
+    #                 if (message.role === "user")
+    #                   return User: ${message.content}\n;
+    #                 return Assistant: ${message.content}\n;
+    #               })}
+    
+    # prompt = f"""
+    #               CONTEXT: {context_text}
+                  
+
+    #               USER INPUT: {originalMsg}"""
+    
+    prompt = f"""###\nAnswer the questions using the context knowledge only.\n###\nContext: {context_text}\n####\n###\nQuestion: {originalMsg}\nAnswer:"""
+    
+    sys =""" Use the following pieces of context to answer the questions. \nIf you don't know the answer, just say that you don't know, don't try to make up an answer. If answer is not present in context, do not answer"""
+   
+   
+    ai_response = requests.post(
+        "http://216.48.180.179:80/inference",
+        json={"query": f"{originalMsg}. Do not answer if it is not present in the context provided by user.", "sys_msg": "Answer the questions using the context knowledge only. IF CONTEXT PROVIDED IS NOT ENOUGH FOR ANSWER, THEN MENTION YOU ARE ANSWERING FROM YOUR KNOWLEDGE. Just say you don't know.", "context": context_text}
+        )
+    print(ai_response.text)
+    create_message(db=session, file_id=fileId, user_id=current_user.id, message=ai_response.text, isUser=False)
+
+    return ai_response.text
 
 
 @router.get("/all")

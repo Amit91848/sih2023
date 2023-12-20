@@ -4,9 +4,10 @@ from doctr.io import DocumentFile
 import math
 import PIL
 import os
-from PIL import ImageDraw
+from PIL import ImageDraw, Image
 import matplotlib.pyplot as plt
 from core.utils import generate_random_file_name
+import easyocr
 
 
 def convert_coordinates(geometry, page_dim):
@@ -84,5 +85,54 @@ def generate_ocr(file_name: str, img_path: str):
     
     result_image.save(file_path)
     return data, file_path
+
+
+def generate_hindi_ocr_image(img_path:str, result_with_coordinates):
+    list_of_coordinates=[]
+
+    for i in range(len(result_with_coordinates)):
+      list_of_coordinates.append(result_with_coordinates[i][0])
+      
+    try:
+        # Open the image file
+        with Image.open(img_path) as img:
+            # Create a drawing object
+            draw = ImageDraw.Draw(img)
+
+            # Convert each set of coordinates to ImageDraw polygons
+            for coordinates in list_of_coordinates:
+                draw.polygon(coordinates, fill='red', width='1')
+
+            # Save the modified image
+            return img            
+    except Exception as e:
+        print(f"Error: {e}")
+        
+def is_english(text: str):
+    # Define ASCII ranges for English letters
+    english_ranges = [(65, 90), (97, 122)]
+
+    # Count the number of characters within the English ranges
+    english_char_count = sum(1 for char in text if any(start <= ord(char) <= end for start, end in english_ranges))
+
+    # Set a threshold ratio (adjust as needed)
+    threshold_ratio = 0.8
+
+    # Check if the ratio of English characters is above the threshold
+    return english_char_count / len(text) >= threshold_ratio
+
+def generate_hindi_ocr(file_name: str, img_path: str):
+    reader = easyocr.Reader(['hi'])
+    data = reader.readtext(img_path, detail=0, paragraph=True)
     
+    result_with_coordinates = reader.readtext(img_path)
+    
+    result_image = generate_hindi_ocr_image(img_path, result_with_coordinates)
+    
+    rand_file_name = generate_random_file_name(file_name=file_name)
+    file_path = os.path.join(os.getcwd(), "files", rand_file_name)
+    
+    result_image.save(file_path)
+    
+    return data, file_path
     

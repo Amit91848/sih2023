@@ -104,6 +104,8 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
     file_url, isLocal = upload_service.upload(file_content=io.BytesIO(
         contents), file_name=file_name)
     print("uploaded pdf to local path")
+    
+    ocr_url = ""
          
     if not file_url:
         raise HTTPException(
@@ -111,13 +113,13 @@ async def upload(embeddings: EmbeddingDep, vector_store: VectorStoreDep, upload_
 
     print("uploaded to pinecone")
     
-    data = None
+    data = ""
     if not ispdf:
-        img_data, file_url = generate_ocr(file_name=file_name, img_path=file_url)
+        img_data, ocr_url = generate_ocr(file_name=file_name, img_path=file_url)
         data = img_data
 
     file_obj = create_file(db=session, name=file.filename,
-                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size, isPdf=ispdf)
+                           url=file_url, key=file_name, user_id=current_user.id,isLocal=isLocal,size=size, isPdf=ispdf, ocrText=data, ocrOgImage=ocr_url)
     
     if ispdf:
         await upload_pdf_to_vector_database(embeddings=embeddings, vector_store=vector_store, file_url=file_url, file_id=file_obj.id)

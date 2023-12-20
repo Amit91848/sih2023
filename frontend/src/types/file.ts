@@ -17,4 +17,6 @@ export interface IFile {
 	summary_status?: Status;
 	size: number;
 	isPdf: boolean;
+	ocrText?: string;
+	ocrOgImage?: string;
 }

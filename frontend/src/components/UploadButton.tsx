@@ -154,7 +154,7 @@ const UploadButton = () => {
 				}}
 				asChild
 			>
-				<Button>Upload PDF</Button>
+				<Button>Upload Document</Button>
 			</DialogTrigger>
 
 			<DialogContent>
