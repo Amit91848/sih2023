@@ -71,7 +71,6 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=ALGORITHM)
         token_data = TokenPayload(**payload)
-        print(token_data)
     except (JWTError, ValidationError):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Could not validate credentials")
