@@ -164,7 +164,7 @@ async def get_all_file_summaries(session: SessionDep, current_user: CurrentUser,
 
     return success_response(data=summaries)
 
-@router.get("/all")
+@router.get("/getAll")
 async def user_files(session: SessionDep, current_user: CurrentUser):
     files = get_user_files(session, current_user.id)
     data = []
