@@ -10,7 +10,7 @@ export const postFile = async (file: File) => {
 	formData.append("file", file);
 
 	const res = await cAxios.post<IUploadFileResponse>(
-		`${BACKEND_URL}/file/all`,
+		`${BACKEND_URL}/file/upload`,
 		formData,
 		{
 			headers: {

@@ -90,7 +90,7 @@ export const cAxios = {
 	): Promise<APIResponse<T>> => handleRequest<T>({ ...config, method: "delete", url }),
 	// Add more methods as needed
 };
-export const BACKEND_URL = "http://localhost:5000/api";
+export const BACKEND_URL = "http://localhost:8000/api";
 
 export const HEADER_TOKEN =
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDM4NjU4MDksInN1YiI6IjEifQ.S0ilxh-FQEebqfOPw_Q-Y0DwEwipqKmAjBwQHU6Zg60";
