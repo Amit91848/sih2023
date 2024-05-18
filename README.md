@@ -17,7 +17,7 @@ over internet.
 
 ![Dashboard](./static/file_options.jpg)
 
-### Grammer Checker
+### Grammar Checker
 
 ![Dashboard](./static/grammar_check.jpg)
 
